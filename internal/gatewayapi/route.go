@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"strings"
 
+	"golang.org/x/exp/slices"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/gateway-api/apis/v1alpha2"
 	"sigs.k8s.io/gateway-api/apis/v1beta1"
@@ -527,6 +528,11 @@ func (t *Translator) processHTTPRouteParentRefListener(route RouteContext, route
 
 func (t *Translator) ProcessTLSRoutes(tlsRoutes []*v1alpha2.TLSRoute, gateways []*GatewayContext, resources *Resources, xdsIR XdsIRMap) []*TLSRouteContext {
 	var relevantTLSRoutes []*TLSRouteContext
+
+	// Sort by creation timestamp to ensure we always process routes in the same order.
+	slices.SortFunc(tlsRoutes, func(a, b *v1alpha2.TLSRoute) bool {
+		return a.CreationTimestamp.Before(&b.CreationTimestamp)
+	})
 
 	for _, tls := range tlsRoutes {
 		if tls == nil {
