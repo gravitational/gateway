@@ -1,0 +1,69 @@
+name: cd
+on:
+  push:
+    tags:
+    - 'v[0-9]+.[0-9]+.[0-9]+.*'
+
+permissions:
+  contents: read
+
+jobs: 
+
+    name: Build and Push
+    permissions:
+      contents: read
+      checks: read
+      id-token: write
+    env:
+      AWS_REGION: us-west-2
+      ECR_AWS_ROLE: arn:aws:iam::146628656107:role/gateway-api-github-action-ecr-role
+    runs-on: ubuntu-latest
+    needs: [verify, test]
+    steps:
+    - name: Checkout Repo
+      uses: actions/checkout@v3
+    - name: Setup Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-region: ${{ env.AWS_REGION }}
+        role-to-assume: ${{ env.ECR_AWS_ROLE }}
+        mask-aws-account-id: 'no'
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+    - name: Setup Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    - name: Build and push gateway
+      run: make teleport-push
+    - name: Build and push helm
+      run: make teleport-helm-push
+
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repo
+      uses: actions/checkout@v3
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version-file: go.mod
+        cache: true
+    - name: Run Verify
+      run: make teleport-verify
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repo
+      uses: actions/checkout@v3
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version-file: go.mod
+        cache: true
+    - name: Unit Tests
+      run: make teleport-test

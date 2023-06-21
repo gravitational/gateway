@@ -1,11 +1,6 @@
 name: Latest Release
 
-on:
-  push:
-    branches:
-    - "main"
-    paths-ignore:
-    - "**/*.png"
+on: workflow_call
 
 jobs:
   latest-release:
