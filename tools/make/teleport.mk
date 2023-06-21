@@ -5,13 +5,14 @@
 GATEWAY_API_VERSION ?= "v0.6.2"
 GATEWAY_RELEASE_URL ?= https://raw.githubusercontent.com/gravitational/gatweway-api/teleport/release/experimental-install.yaml
 
-TAG = $(shell git describe --tags --dirty)
-RELEASE_VERSION = ${TAG}
+TAG ?= $(shell git describe --tags --dirty --always)
+RELEASE_VERSION ?= ${TAG}
+CHART_VERSION ?= ${RELEASE_VERSION}
 
-REGISTRY = public.ecr.aws/gravitational
-IMAGE_NAME = envoy-gateway
-IMAGE = ${REGISTRY}/${IMAGE_NAME}
-OCI_REGISTRY = oci://public.ecr.aws/gravitational
+REGISTRY ?= public.ecr.aws/gravitational
+IMAGE_NAME ?= envoy-gateway
+IMAGE ?= ${REGISTRY}/${IMAGE_NAME}
+OCI_REGISTRY ?= oci://public.ecr.aws/gravitational
 
 .PHONY: teleport-generate
 teleport-generate: generate manifests
@@ -24,13 +25,20 @@ teleport-test: test
 teleport-verify: ## Run lint and gen-check.
 teleport-verify: gen-check lint
 
+teleport-go-build: go.build
+
 .PHONY: teleport-build
 teleport-build: ## Run build using teleport specific configuration.
-teleport-build: image.build.multiarch
+teleport-build: teleport-go-build image.build
 
 .PHONY: teleport-push
 teleport-push: ## Push the current build of envoy/gateway to teleport's registry.
-teleport-push: push
+teleport-push: teleport-build push
+
+.PHONY: teleport-build-multiarch
+teleport-build-multiarch: go.build.multiarch image-multiarch
+
+teleport-helm-%: RELEASE_VERSION
 
 .PHONY: teleport-helm-package
 teleport-helm-package: ## Package envoy gateway helm chart with teleprot specific overrides.
