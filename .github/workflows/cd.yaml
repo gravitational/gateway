@@ -9,6 +9,7 @@ permissions:
 
 jobs: 
 
+  push:
     name: Build and Push
     permissions:
       contents: read
