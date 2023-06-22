@@ -3,7 +3,7 @@
 
 # TODO(david): gateway-api use tag reference in release url.
 GATEWAY_API_VERSION ?= "v0.6.2"
-GATEWAY_RELEASE_URL ?= https://raw.githubusercontent.com/gravitational/gatweway-api/teleport/release/experimental-install.yaml
+GATEWAY_RELEASE_URL ?= https://raw.githubusercontent.com/gravitational/gateway-api/teleport/release/experimental-install.yaml
 
 TAG ?= $(shell git describe --tags --dirty --always)
 RELEASE_VERSION ?= ${TAG}
