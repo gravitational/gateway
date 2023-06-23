@@ -1,20 +1,5 @@
 name: Build and Test
-on:
-  push:
-    branches:
-    - "main"
-    - "release/v*"
-    paths-ignore:
-    - "**/*.png"
-  pull_request:
-    branches:
-    - "main"
-    - "release/v*"
-    paths-ignore:
-    - "**/*.png"
-
-permissions:
-  contents: read
+on: workflow_call
 
 jobs:
   lint:
