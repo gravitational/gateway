@@ -11,6 +11,8 @@ ignore: |
   test/helm/
   examples/extension-server/charts/extension-server
   site/node_modules/
+  .github/workflows/cd.yaml
+  .github/workflows/ci.yaml
 
 rules:
   braces:
