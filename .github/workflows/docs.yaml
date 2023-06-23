@@ -1,20 +1,5 @@
-name: Hugo Docs
-on:
-  push:
-    branches:
-    - "main"
-    paths:
-    - 'site/**'
-    - 'tools/make/docs.mk'
-  pull_request:
-    branches:
-    - "main"
-    paths:
-    - 'site/**'
-    - 'tools/make/docs.mk'
-
-permissions:
-  contents: read
+name: Docs
+on: workflow_call
 
 jobs:
   docs-lint:
