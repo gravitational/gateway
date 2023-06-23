@@ -1,7 +1,4 @@
-on:
-  workflow_dispatch:
-  schedule:
-  - cron: '0 */4 * * *'
+on: workflow_call
 
 jobs:
   prune_stale:
