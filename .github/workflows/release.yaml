@@ -1,13 +1,6 @@
 name: Release
 
-permissions:
-  contents: read
-
-on:
-  push:
-    # Sequence of patterns matched against refs/tags
-    tags:
-      - "v*.*.*"
+on: workflow_call
 
 jobs:
   # For push event, we run benchmark test here because we need to
