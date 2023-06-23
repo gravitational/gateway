@@ -1,14 +1,6 @@
 name: Latest Release
 
-permissions:
-  contents: read
-
-on:
-  push:
-    branches:
-    - "main"
-    paths-ignore:
-    - "**/*.png"
+on: workflow_call
 
 # Limit workflow run or job concurrency,
 # avoid workflow failed when merge more than one PR in short time.
