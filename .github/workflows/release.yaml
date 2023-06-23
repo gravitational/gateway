@@ -3,12 +3,7 @@ name: Release
 permissions:
   contents: read
 
-on:
-  push:
-    # Sequence of patterns matched against refs/tags
-    tags:
-      - "v*.*.*"
-
+on: workflow_call
 
 jobs:
   verify-build-and-test:
