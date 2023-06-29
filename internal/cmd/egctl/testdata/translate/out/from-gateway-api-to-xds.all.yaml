@@ -139,6 +139,10 @@ xds:
       dynamicActiveClusters:
       - cluster:
           '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+          circuitBreakers:
+            thresholds:
+            - maxConnections: 32768
+              maxPendingRequests: 32768
           commonLbConfig:
             localityWeightedLbConfig: {}
           connectTimeout: 10s
@@ -152,6 +156,10 @@ xds:
           type: EDS
       - cluster:
           '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+          circuitBreakers:
+            thresholds:
+            - maxConnections: 32768
+              maxPendingRequests: 32768
           commonLbConfig:
             localityWeightedLbConfig: {}
           connectTimeout: 10s
@@ -170,6 +178,10 @@ xds:
                 http2ProtocolOptions: {}
       - cluster:
           '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+          circuitBreakers:
+            thresholds:
+            - maxConnections: 32768
+              maxPendingRequests: 32768
           commonLbConfig:
             localityWeightedLbConfig: {}
           connectTimeout: 10s
@@ -180,9 +192,23 @@ xds:
               resourceApiVersion: V3
           name: default-eg-tls-passthrough-backend
           outlierDetection: {}
+          transportSocket:
+            name: envoy.transport_sockets.upstream_proxy_protocol
+            typedConfig:
+              '@type': type.googleapis.com/envoy.extensions.transport_sockets.proxy_protocol.v3.ProxyProtocolUpstreamTransport
+              config:
+                version: V2
+              transportSocket:
+                name: envoy.transport_sockets.raw_buffer
+                typedConfig:
+                  '@type': type.googleapis.com/envoy.extensions.transport_sockets.raw_buffer.v3.RawBuffer
           type: EDS
       - cluster:
           '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+          circuitBreakers:
+            thresholds:
+            - maxConnections: 32768
+              maxPendingRequests: 32768
           commonLbConfig:
             localityWeightedLbConfig: {}
           connectTimeout: 10s
@@ -193,9 +219,23 @@ xds:
               resourceApiVersion: V3
           name: default-eg-tcp-backend
           outlierDetection: {}
+          transportSocket:
+            name: envoy.transport_sockets.upstream_proxy_protocol
+            typedConfig:
+              '@type': type.googleapis.com/envoy.extensions.transport_sockets.proxy_protocol.v3.ProxyProtocolUpstreamTransport
+              config:
+                version: V2
+              transportSocket:
+                name: envoy.transport_sockets.raw_buffer
+                typedConfig:
+                  '@type': type.googleapis.com/envoy.extensions.transport_sockets.raw_buffer.v3.RawBuffer
           type: EDS
       - cluster:
           '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+          circuitBreakers:
+            thresholds:
+            - maxConnections: 32768
+              maxPendingRequests: 32768
           commonLbConfig:
             localityWeightedLbConfig: {}
           connectTimeout: 10s

@@ -88,7 +88,7 @@ gatewayClass:
       namespace: envoy-gateway-system
   status:
     conditions:
-    - lastTransitionTime: "2023-04-12T04:22:35Z"
+    - lastTransitionTime: "2023-06-29T21:50:23Z"
       message: Valid GatewayClass
       reason: Accepted
       status: "True"
@@ -108,12 +108,12 @@ gateways:
     listeners:
     - attachedRoutes: 1
       conditions:
-      - lastTransitionTime: "2023-04-12T04:22:35Z"
+      - lastTransitionTime: "2023-06-29T21:50:23Z"
         message: Sending translated listener configuration to the data plane
         reason: Programmed
         status: "True"
         type: Programmed
-      - lastTransitionTime: "2023-04-12T04:22:35Z"
+      - lastTransitionTime: "2023-06-29T21:50:23Z"
         message: Listener has been successfully translated
         reason: Accepted
         status: "True"
@@ -148,12 +148,12 @@ httpRoutes:
   status:
     parents:
     - conditions:
-      - lastTransitionTime: "2023-04-12T04:22:35Z"
+      - lastTransitionTime: "2023-06-29T21:50:23Z"
         message: Route is accepted
         reason: Accepted
         status: "True"
         type: Accepted
-      - lastTransitionTime: "2023-04-12T04:22:35Z"
+      - lastTransitionTime: "2023-06-29T21:50:23Z"
         message: Resolved all the Object references for the Route
         reason: ResolvedRefs
         status: "True"
@@ -252,6 +252,10 @@ xds:
       dynamicActiveClusters:
       - cluster:
           '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+          circuitBreakers:
+            thresholds:
+            - maxConnections: 32768
+              maxPendingRequests: 32768
           commonLbConfig:
             localityWeightedLbConfig: {}
           connectTimeout: 10s
@@ -324,3 +328,4 @@ xds:
               name: default-backend-rule-0-match-0-www.example.com
               route:
                 cluster: default-backend-rule-0-match-0-www.example.com
+

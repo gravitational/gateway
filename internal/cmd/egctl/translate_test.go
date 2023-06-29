@@ -22,7 +22,6 @@ import (
 )
 
 func TestTranslate(t *testing.T) {
-	t.Skip()
 	testCases := []struct {
 		name         string
 		from         string
