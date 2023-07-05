@@ -23,7 +23,7 @@ include tools/make/teleport.mk
 
 ROOT_PACKAGE=github.com/envoyproxy/gateway
 
-RELEASE_VERSION=$(shell cat VERSION)
+RELEASE_VERSION?=$(shell cat VERSION)
 
 # Set Root Directory Path
 ifeq ($(origin ROOT_DIR),undefined)
