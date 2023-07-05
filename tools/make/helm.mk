@@ -6,7 +6,6 @@ include tools/make/env.mk
 
 OCI_REGISTRY ?= oci://docker.io/envoyproxy
 CHART_NAME ?= gateway-helm
-CHART_PATH ?= charts/gateway-helm
 CHART_VERSION ?= ${RELEASE_VERSION}
 
 ##@ Helm
@@ -14,7 +13,7 @@ helm-package:
 helm-package: ## Package envoy gateway helm chart.
 helm-package: helm-generate
 	@$(LOG_TARGET)
-	helm package ${CHART_PATH} --app-version ${TAG} --version ${CHART_VERSION} --destination ${OUTPUT_DIR}/charts/
+	helm package charts/${CHART_NAME} --app-version ${TAG} --version ${CHART_VERSION} --destination ${OUTPUT_DIR}/charts/
 
 helm-push:
 helm-push: ## Push envoy gateway helm chart to OCI registry.
@@ -30,7 +29,7 @@ helm-release:
 helm-release: ## Package envoy gateway helm chart for release
 helm-release: helm-generate
 	@$(LOG_TARGET)
-	helm package ${CHART_PATH} --app-version ${TAG} --version ${CHART_VERSION} --destination ${OUTPUT_DIR}/charts/
+	helm package charts/${CHART_NAME} --app-version ${TAG} --version ${CHART_VERSION} --destination ${OUTPUT_DIR}/charts/
 
 helm-generate:
 	ImageRepository=${IMAGE} ImageTag=${TAG} envsubst < charts/gateway-helm/values.tmpl.yaml > ./charts/gateway-helm/values.yaml

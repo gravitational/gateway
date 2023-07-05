@@ -13,7 +13,6 @@ REGISTRY ?= public.ecr.aws/gravitational
 IMAGE_NAME ?= envoy-gateway
 IMAGE ?= ${REGISTRY}/${IMAGE_NAME}
 OCI_REGISTRY ?= oci://public.ecr.aws/gravitational
-CHART_NAME ?= envoy-gateway-helm
 
 .PHONY: teleport-generate
 teleport-generate: generate manifests
