@@ -183,6 +183,32 @@ func addServerNamesMatch(xdsListener *listenerv3.Listener, filterChain *listener
 	return nil
 }
 
+func addSNIMatch(xdsListener *listenerv3.Listener, filterChain *listenerv3.FilterChain, snis, protos []string) error {
+	var serverNames, applicationProtocols []string
+
+	// Don't add a filter chain match if the hostname is a wildcard character.
+	if len(snis) > 0 && snis[0] != "*" {
+		serverNames = snis
+	}
+	// Don't add a filter chain match if the proto is a wildcard character.
+	if len(protos) > 0 && protos[0] != "*" {
+		applicationProtocols = protos
+	}
+
+	if serverNames != nil || applicationProtocols != nil {
+		filterChain.FilterChainMatch = &listenerv3.FilterChainMatch{
+			ServerNames:          serverNames,
+			ApplicationProtocols: applicationProtocols,
+		}
+
+		if err := addXdsTLSInspectorFilter(xdsListener); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // findXdsHTTPRouteConfigName finds the name of the route config associated with the
 // http connection manager within the default filter chain and returns an empty string if
 // not found.
@@ -249,7 +275,7 @@ func addXdsTCPFilterChain(xdsListener *listenerv3.Listener, irListener *ir.TCPLi
 	}
 
 	if irListener.TLS != nil {
-		if err := addServerNamesMatch(xdsListener, filterChain, irListener.TLS.SNIs); err != nil {
+		if err := addSNIMatch(xdsListener, filterChain, irListener.TLS.SNIs, irListener.TLS.Protos); err != nil {
 			return err
 		}
 	}
