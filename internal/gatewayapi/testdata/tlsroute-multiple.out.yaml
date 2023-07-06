@@ -38,7 +38,7 @@ tlsRoutes:
     namespace: default
     name: tlsroute-1
     annotations:
-      "cloud.teleport.dev/protos": "customproto"
+      "cloud.teleport.dev/protos": "proto1,proto2"
   spec:
     parentRefs:
     - namespace: envoy-gateway
@@ -105,7 +105,8 @@ xdsIR:
         snis:
         - foo.com
         protos:
-        - "customproto"
+        - "proto1"
+        - "proto2"
       destinations:
       - host: 7.7.7.7
         port: 8080
