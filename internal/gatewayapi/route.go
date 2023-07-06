@@ -614,7 +614,7 @@ func (t *Translator) processTLSRouteParentRefs(tlsRoute *TLSRouteContext, resour
 
 		var protos []string
 		if v := tlsRoute.Annotations[AnnotationTLSRouteProtos]; v != "" {
-			protos = strings.Split(tlsRoute.Annotations[AnnotationTLSRouteProtos], ",")
+			protos = strings.Split(v, ",")
 		}
 
 		var hasHostnameIntersection bool
