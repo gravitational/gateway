@@ -130,7 +130,8 @@ xdsIR:
           port: 8080
           weight: 1
     tcp:
-    - name: "envoy-gateway-gateway-1-tcp-tcproute-1"
+    - listenerName: envoy-gateway-gateway-1-tcp
+      routeName: envoy-gateway-gateway-1-tcp-tcproute-1
       address: "0.0.0.0"
       port: 10080
       destinations:

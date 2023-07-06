@@ -67,4 +67,4 @@
             path: /dev/stdout
         cluster: tcp-route-simple-4
         statPrefix: tcp
-  name: tcp-route-simple
+  name: tcp

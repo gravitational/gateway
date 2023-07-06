@@ -113,13 +113,15 @@ tcpRoutes:
 xdsIR:
   envoy-gateway-gateway-1:
     tcp:
-      - name: "envoy-gateway-gateway-1-tcp1-tcproute-1"
+      - listenerName: envoy-gateway-gateway-1-tcp1
+        routeName: envoy-gateway-gateway-1-tcp1-tcproute-1
         address: "0.0.0.0"
         port: 10162
         destinations:
           - host: "7.7.7.7"
             port: 8163
-      - name: "envoy-gateway-gateway-1-tcp2-tcproute-2"
+      - listenerName: envoy-gateway-gateway-1-tcp2
+        routeName: envoy-gateway-gateway-1-tcp2-tcproute-2
         address: "0.0.0.0"
         port: 10163
         destinations:

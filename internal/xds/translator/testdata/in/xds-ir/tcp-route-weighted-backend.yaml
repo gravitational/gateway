@@ -1,5 +1,6 @@
 tcp:
-- name: "tcp-route-weighted-backend"
+- listenerName: "tcp"
+  routeName: "tcp-route-weighted-backend"
   address: "0.0.0.0"
   port: 10080
   tls:

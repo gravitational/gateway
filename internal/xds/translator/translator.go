@@ -200,7 +200,7 @@ func processTCPListenerXdsTranslation(tCtx *types.ResourceVersionTable, tcpListe
 	for _, tcpListener := range tcpListeners {
 		// 1:1 between IR TCPListener and xDS Cluster
 		addXdsCluster(tCtx, addXdsClusterArgs{
-			name:         tcpListener.Name,
+			name:         tcpListener.RouteName,
 			destinations: tcpListener.Destinations,
 			tSocket:      nil,
 			protocol:     DefaultProtocol,
@@ -210,11 +210,11 @@ func processTCPListenerXdsTranslation(tCtx *types.ResourceVersionTable, tcpListe
 		// Search for an existing listener, if it does not exist, create one.
 		xdsListener := findXdsListener(tCtx, tcpListener.Address, tcpListener.Port, corev3.SocketAddress_TCP)
 		if xdsListener == nil {
-			xdsListener = buildXdsTCPListener(tcpListener.Name, tcpListener.Address, tcpListener.Port)
+			xdsListener = buildXdsTCPListener(tcpListener.ListenerName, tcpListener.Address, tcpListener.Port)
 			tCtx.AddXdsResource(resourcev3.ListenerType, xdsListener)
 		}
 
-		if err := addXdsTCPFilterChain(xdsListener, tcpListener, tcpListener.Name); err != nil {
+		if err := addXdsTCPFilterChain(xdsListener, tcpListener, tcpListener.RouteName); err != nil {
 			return err
 		}
 	}

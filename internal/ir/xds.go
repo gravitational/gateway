@@ -23,6 +23,7 @@ var (
 	ErrListenerPortInvalid           = errors.New("field Port specified is invalid")
 	ErrHTTPListenerHostnamesEmpty    = errors.New("field Hostnames must be specified with at least a single hostname entry")
 	ErrTCPListenerSNIsEmpty          = errors.New("field SNIs must be specified with at least a single server name entry")
+	ErrTCPListenerRouteNameEmpty     = errors.New("field RouteName must be specified")
 	ErrTLSServerCertEmpty            = errors.New("field ServerCertificate must be specified")
 	ErrTLSPrivateKey                 = errors.New("field PrivateKey must be specified")
 	ErrHTTPRouteNameEmpty            = errors.New("field Name must be specified")
@@ -86,7 +87,7 @@ func (x Xds) GetHTTPListener(name string) *HTTPListener {
 
 func (x Xds) GetTCPListener(name string) *TCPListener {
 	for _, listener := range x.TCP {
-		if listener.Name == name {
+		if listener.ListenerName == name {
 			return listener
 		}
 	}
@@ -602,8 +603,10 @@ func (s StringMatch) Validate() error {
 // TCPListener holds the TCP listener configuration.
 // +k8s:deepcopy-gen=true
 type TCPListener struct {
-	// Name of the TCPListener
-	Name string
+	// ListenerName of the TCPListener
+	ListenerName string
+	// RouteName of the tcp or tls route.
+	RouteName string
 	// Address that the listener should listen on.
 	Address string
 	// Port on which the service can be expected to be accessed by clients.
@@ -618,8 +621,11 @@ type TCPListener struct {
 // Validate the fields within the TCPListener structure
 func (h TCPListener) Validate() error {
 	var errs error
-	if h.Name == "" {
+	if h.ListenerName == "" {
 		errs = multierror.Append(errs, ErrListenerNameEmpty)
+	}
+	if h.RouteName == "" {
+		errs = multierror.Append(errs, ErrTCPListenerRouteNameEmpty)
 	}
 	if ip := net.ParseIP(h.Address); ip == nil {
 		errs = multierror.Append(errs, ErrListenerAddressInvalid)

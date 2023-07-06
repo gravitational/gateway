@@ -1,5 +1,6 @@
 tcp:
-- name: "tls-passthrough"
+- listenerName: "tls"
+  routeName: "tls-passthrough"
   address: "0.0.0.0"
   port: 10080
   tls:
