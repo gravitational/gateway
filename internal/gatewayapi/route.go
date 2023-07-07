@@ -19,10 +19,13 @@ import (
 )
 
 const (
-	// AnnotationUpstreamProxyProtocol enables proxy protocol by a TLSRoute.
-	AnnotationUpstreamProxyProtocol = "cloud.teleport.dev/upstream-proxy-protocol"
-	// AnnotationUpstreamMaxConnections specifies the max upstream connections.
-	AnnotationUpstreamMaxConnections = "cloud.teleport.dev/upstream-max-connections"
+	// AnnotationRouteUpstreamProxyProtocol enables proxy protocol for a given route. Currently
+	// only TLSRoutes support this annotation. The value is expected to be set to "true",
+	// case-insenstive, to enable proxy protocol. All other values will be ignored.
+	AnnotationRouteUpstreamProxyProtocol = "cloud.teleport.dev/upstream-proxy-protocol"
+	// AnnotationRouteUpstreamMaxConnections specifies the max upstream connections for a given
+	// route. Currently only TLSRoutes support this annotation. The value must be a valid uint32.
+	AnnotationRouteUpstreamMaxConnections = "cloud.teleport.dev/upstream-max-connections"
 )
 
 var _ RoutesTranslator = (*Translator)(nil)
@@ -569,9 +572,11 @@ func getUpstreamConfig(obj client.Object) ir.UpstreamConfig {
 	)
 
 	annotations := obj.GetAnnotations()
-	_, enableProxyProtocol = annotations[AnnotationUpstreamProxyProtocol]
+	if v := annotations[AnnotationRouteUpstreamProxyProtocol]; strings.ToLower(v) == "true" {
+		enableProxyProtocol = true
+	}
 
-	if v := annotations[AnnotationUpstreamMaxConnections]; v != "" {
+	if v := annotations[AnnotationRouteUpstreamMaxConnections]; v != "" {
 		uInt, err := strconv.ParseUint(v, 10, 32)
 		if err == nil {
 			maxConns = uint32(uInt)
