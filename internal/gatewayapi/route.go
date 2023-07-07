@@ -7,13 +7,22 @@ package gatewayapi
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/gateway-api/apis/v1alpha2"
 	"sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/envoyproxy/gateway/internal/ir"
+)
+
+const (
+	// AnnotationUpstreamProxyProtocol enables proxy protocol by a TLSRoute.
+	AnnotationUpstreamProxyProtocol = "cloud.teleport.dev/upstream-proxy-protocol"
+	// AnnotationUpstreamMaxConnections specifies the max upstream connections.
+	AnnotationUpstreamMaxConnections = "cloud.teleport.dev/upstream-max-connections"
 )
 
 var _ RoutesTranslator = (*Translator)(nil)
@@ -553,6 +562,28 @@ func (t *Translator) ProcessTLSRoutes(tlsRoutes []*v1alpha2.TLSRoute, gateways [
 	return relevantTLSRoutes
 }
 
+func getUpstreamConfig(obj client.Object) ir.UpstreamConfig {
+	var (
+		enableProxyProtocol bool
+		maxConns            uint32
+	)
+
+	annotations := obj.GetAnnotations()
+	_, enableProxyProtocol = annotations[AnnotationUpstreamProxyProtocol]
+
+	if v := annotations[AnnotationUpstreamMaxConnections]; v != "" {
+		uInt, err := strconv.ParseUint(v, 10, 32)
+		if err == nil {
+			maxConns = uint32(uInt)
+		}
+	}
+
+	return ir.UpstreamConfig{
+		EnableProxyProtocol: enableProxyProtocol,
+		MaxConnections:      maxConns,
+	}
+}
+
 func (t *Translator) processTLSRouteParentRefs(tlsRoute *TLSRouteContext, resources *Resources, xdsIR XdsIRMap) {
 	for _, parentRef := range tlsRoute.parentRefs {
 
@@ -628,8 +659,10 @@ func (t *Translator) processTLSRouteParentRefs(tlsRoute *TLSRouteContext, resour
 				TLS: &ir.TLSInspectorConfig{
 					SNIs: hosts,
 				},
-				Destinations: routeDestinations,
+				Destinations:   routeDestinations,
+				UpstreamConfig: getUpstreamConfig(tlsRoute),
 			}
+
 			gwXdsIR := xdsIR[irKey]
 			gwXdsIR.TCP = append(gwXdsIR.TCP, irListener)
 

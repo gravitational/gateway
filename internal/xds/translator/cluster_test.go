@@ -28,7 +28,7 @@ const (
 func TestBuildXdsCluster(t *testing.T) {
 	bootstrapXdsCluster := getXdsClusterObjFromBootstrap(t)
 
-	dynamicXdsCluster := buildXdsCluster(bootstrapXdsCluster.Name, bootstrapXdsCluster.TransportSocket, HTTP2, DefaultEndpointType)
+	dynamicXdsCluster := buildXdsCluster(bootstrapXdsCluster.Name, bootstrapXdsCluster.TransportSocket, HTTP2, DefaultEndpointType, nil)
 
 	require.Equal(t, bootstrapXdsCluster.Name, dynamicXdsCluster.Name)
 	require.Equal(t, bootstrapXdsCluster.ClusterDiscoveryType, dynamicXdsCluster.ClusterDiscoveryType)

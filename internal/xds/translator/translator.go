@@ -202,21 +202,35 @@ func (t *Translator) processHTTPListenerXdsTranslation(tCtx *types.ResourceVersi
 func processTCPListenerXdsTranslation(tCtx *types.ResourceVersionTable, tcpListeners []*ir.TCPListener) error {
 	for _, tcpListener := range tcpListeners {
 
-		// TODO(dboslee): This currently assumes proxy protocol should always be passed to the upstream.
-		// Keep an eye on https://github.com/envoyproxy/gateway/issues/1328 and https://github.com/kubernetes-sigs/gateway-api/issues/1955
+		// TODO(dboslee):Keep an eye on
+		// https://github.com/envoyproxy/gateway/issues/1328 and
+		// https://github.com/kubernetes-sigs/gateway-api/issues/1955
 		// to see if proxy protocol support lands in gateway-api or envoyproxy/gateway.
-		tSocket, err := buildXdsProxyProtocolTCPSocket()
-		if err != nil {
-			return err
+
+		var (
+			tSocket *corev3.TransportSocket
+			cbs     *clusterv3.CircuitBreakers
+			err     error
+		)
+		if tcpListener.UpstreamConfig.EnableProxyProtocol {
+			tSocket, err = buildXdsProxyProtocolTCPSocket()
+			if err != nil {
+				return err
+			}
+		}
+
+		if maxConns := tcpListener.UpstreamConfig.MaxConnections; maxConns > 0 {
+			cbs = buildXdsClusterCircuitBreaker(maxConns)
 		}
 
 		// 1:1 between IR TCPListener and xDS Cluster
 		addXdsCluster(tCtx, addXdsClusterArgs{
-			name:         tcpListener.RouteName,
-			destinations: tcpListener.Destinations,
-			tSocket:      tSocket,
-			protocol:     DefaultProtocol,
-			endpoint:     Static,
+			name:            tcpListener.RouteName,
+			destinations:    tcpListener.Destinations,
+			tSocket:         tSocket,
+			protocol:        DefaultProtocol,
+			endpoint:        Static,
+			circuitBreakers: cbs,
 		})
 
 		// Search for an existing listener, if it does not exist, create one.
@@ -325,7 +339,7 @@ func findXdsCluster(tCtx *types.ResourceVersionTable, name string) *clusterv3.Cl
 }
 
 func addXdsCluster(tCtx *types.ResourceVersionTable, args addXdsClusterArgs) {
-	xdsCluster := buildXdsCluster(args.name, args.tSocket, args.protocol, args.endpoint)
+	xdsCluster := buildXdsCluster(args.name, args.tSocket, args.protocol, args.endpoint, args.circuitBreakers)
 	xdsEndpoints := buildXdsClusterLoadAssignment(args.name, args.destinations)
 	// Use EDS for static endpoints
 	if args.endpoint == Static {
@@ -353,11 +367,12 @@ func findXdsRouteConfig(tCtx *types.ResourceVersionTable, name string) *routev3.
 }
 
 type addXdsClusterArgs struct {
-	name         string
-	destinations []*ir.RouteDestination
-	tSocket      *corev3.TransportSocket
-	protocol     ProtocolType
-	endpoint     EndpointType
+	name            string
+	destinations    []*ir.RouteDestination
+	tSocket         *corev3.TransportSocket
+	protocol        ProtocolType
+	endpoint        EndpointType
+	circuitBreakers *clusterv3.CircuitBreakers
 }
 
 type ProtocolType int

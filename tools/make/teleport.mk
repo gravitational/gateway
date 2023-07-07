@@ -52,15 +52,3 @@ teleport-helm-push: teleport-helm-package helm-push
 teleport-dev-install: ## Install the local changes to gateway the regional kind cluster.
 teleport-dev-install: export CLUSTER_NAME := regional
 teleport-dev-install: kube-install-image
-
-IN_DIR = "internal/cmd/egctl/testdata/translate/in"
-OUT_DIR = "internal/cmd/egctl/testdata/translate/out"
-$(eval EGCTL_TRANSLATE := go run ./cmd/egctl experimental translate)
-
-.PHONY: teleport-generate-testdata
-teleport-generate-testdata:
-	$(EGCTL_TRANSLATE) --from gateway-api --to xds -o json -f $(IN_DIR)/from-gateway-api-to-xds.yaml | jq > $(OUT_DIR)/from-gateway-api-to-xds.all.json; \
-	$(EGCTL_TRANSLATE) --from gateway-api --to xds -o yaml -f $(IN_DIR)/from-gateway-api-to-xds.yaml > $(OUT_DIR)/from-gateway-api-to-xds.all.yaml; \
-	$(EGCTL_TRANSLATE) --add-missing-resources --from gateway-api --to xds,gateway-api -o yaml -f $(IN_DIR)/default-resources.yaml > $(OUT_DIR)/default-resources.all.yaml; \
-	$(EGCTL_TRANSLATE) --type cluster --from gateway-api --to xds -o yaml -f $(IN_DIR)/from-gateway-api-to-xds.yaml > $(OUT_DIR)/from-gateway-api-to-xds.cluster.yaml; \
-	$(EGCTL_TRANSLATE) --type cluster --from gateway-api --to xds,gateway-api -o yaml -f $(IN_DIR)/echo-gateway-api.yaml > $(OUT_DIR)/echo-gateway-api.cluster.yaml; \

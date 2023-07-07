@@ -25,7 +25,20 @@ const (
 	extensionOptionsKey = "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
 )
 
-func buildXdsCluster(routeName string, tSocket *corev3.TransportSocket, protocol ProtocolType, endpointType EndpointType) *clusterv3.Cluster {
+func buildXdsClusterCircuitBreaker(maxConns uint32) *clusterv3.CircuitBreakers {
+	return &clusterv3.CircuitBreakers{
+		// Increase default connection limits per upstream cluster from 1024.
+		Thresholds: []*clusterv3.CircuitBreakers_Thresholds{
+			{
+				Priority:           corev3.RoutingPriority_DEFAULT,
+				MaxConnections:     &wrappers.UInt32Value{Value: maxConns},
+				MaxPendingRequests: wrapperspb.UInt32(maxConns),
+			},
+		},
+	}
+}
+
+func buildXdsCluster(routeName string, tSocket *corev3.TransportSocket, protocol ProtocolType, endpointType EndpointType, cbs *clusterv3.CircuitBreakers) *clusterv3.Cluster {
 	clusterName := routeName
 	cluster := &clusterv3.Cluster{
 		Name:            clusterName,
@@ -36,20 +49,14 @@ func buildXdsCluster(routeName string, tSocket *corev3.TransportSocket, protocol
 			LocalityConfigSpecifier: &clusterv3.Cluster_CommonLbConfig_LocalityWeightedLbConfig_{
 				LocalityWeightedLbConfig: &clusterv3.Cluster_CommonLbConfig_LocalityWeightedLbConfig{}}},
 		OutlierDetection: &clusterv3.OutlierDetection{},
-		CircuitBreakers: &clusterv3.CircuitBreakers{
-			// Increase default connection limits per upstream cluster from 1024.
-			Thresholds: []*clusterv3.CircuitBreakers_Thresholds{
-				{
-					Priority:           corev3.RoutingPriority_DEFAULT,
-					MaxConnections:     &wrappers.UInt32Value{Value: 32768},
-					MaxPendingRequests: wrapperspb.UInt32(32768),
-				},
-			},
-		},
 	}
 
 	if tSocket != nil {
 		cluster.TransportSocket = tSocket
+	}
+
+	if cbs != nil {
+		cluster.CircuitBreakers = cbs
 	}
 
 	if endpointType == Static {

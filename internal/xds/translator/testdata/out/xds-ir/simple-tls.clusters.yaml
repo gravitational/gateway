@@ -1,8 +1,4 @@
-- circuitBreakers:
-    thresholds:
-    - maxConnections: 32768
-      maxPendingRequests: 32768
-  commonLbConfig:
+- commonLbConfig:
     localityWeightedLbConfig: {}
   connectTimeout: 10s
   dnsLookupFamily: V4_ONLY

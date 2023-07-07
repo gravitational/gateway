@@ -616,6 +616,16 @@ type TCPListener struct {
 	TLS *TLSInspectorConfig
 	// Destinations associated with TCP traffic to the service.
 	Destinations []*RouteDestination
+	// UpstreamConfig provides configuration for upstream connections.
+	UpstreamConfig UpstreamConfig
+}
+
+// UpstreamConfig holds the upstream cluster configuration.
+type UpstreamConfig struct {
+	// EnableProxyProtocol enables proxy protocol v2 for connections to upstream endpoints.
+	EnableProxyProtocol bool
+	// MaxConnections sets the maximum open and pending connections to an upstream endpoint.
+	MaxConnections uint32
 }
 
 // Validate the fields within the TCPListener structure

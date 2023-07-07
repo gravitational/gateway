@@ -7,7 +7,7 @@ gatewayClass:
     controllerName: gateway.envoyproxy.io/gatewayclass-controller
   status:
     conditions:
-    - lastTransitionTime: "2023-06-29T21:50:41Z"
+    - lastTransitionTime: "2023-04-11T20:06:41Z"
       message: Valid GatewayClass
       reason: Accepted
       status: "True"
@@ -27,12 +27,12 @@ gateways:
     listeners:
     - attachedRoutes: 1
       conditions:
-      - lastTransitionTime: "2023-06-29T21:50:41Z"
+      - lastTransitionTime: "2023-04-11T20:06:41Z"
         message: Sending translated listener configuration to the data plane
         reason: Programmed
         status: "True"
         type: Programmed
-      - lastTransitionTime: "2023-06-29T21:50:41Z"
+      - lastTransitionTime: "2023-04-11T20:06:41Z"
         message: Listener has been successfully translated
         reason: Accepted
         status: "True"
@@ -67,12 +67,12 @@ httpRoutes:
   status:
     parents:
     - conditions:
-      - lastTransitionTime: "2023-06-29T21:50:41Z"
+      - lastTransitionTime: "2023-04-11T20:06:41Z"
         message: Route is accepted
         reason: Accepted
         status: "True"
         type: Accepted
-      - lastTransitionTime: "2023-06-29T21:50:41Z"
+      - lastTransitionTime: "2023-04-11T20:06:41Z"
         message: Resolved all the Object references for the Route
         reason: ResolvedRefs
         status: "True"
@@ -86,10 +86,6 @@ xds:
     dynamicActiveClusters:
     - cluster:
         '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
-        circuitBreakers:
-          thresholds:
-          - maxConnections: 32768
-            maxPendingRequests: 32768
         commonLbConfig:
           localityWeightedLbConfig: {}
         connectTimeout: 10s

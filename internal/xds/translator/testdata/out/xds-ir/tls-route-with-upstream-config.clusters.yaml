@@ -1,0 +1,25 @@
+- circuitBreakers:
+    thresholds:
+    - maxConnections: 10000
+      maxPendingRequests: 10000
+  commonLbConfig:
+    localityWeightedLbConfig: {}
+  connectTimeout: 10s
+  dnsLookupFamily: V4_ONLY
+  edsClusterConfig:
+    edsConfig:
+      ads: {}
+      resourceApiVersion: V3
+  name: tls-upstream-config-route
+  outlierDetection: {}
+  transportSocket:
+    name: envoy.transport_sockets.upstream_proxy_protocol
+    typedConfig:
+      '@type': type.googleapis.com/envoy.extensions.transport_sockets.proxy_protocol.v3.ProxyProtocolUpstreamTransport
+      config:
+        version: V2
+      transportSocket:
+        name: envoy.transport_sockets.raw_buffer
+        typedConfig:
+          '@type': type.googleapis.com/envoy.extensions.transport_sockets.raw_buffer.v3.RawBuffer
+  type: EDS

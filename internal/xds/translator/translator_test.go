@@ -31,7 +31,6 @@ var (
 )
 
 func TestTranslateXds(t *testing.T) {
-	t.Skip()
 	testCases := []struct {
 		name           string
 		requireSecrets bool
@@ -75,6 +74,9 @@ func TestTranslateXds(t *testing.T) {
 		},
 		{
 			name: "tls-route-passthrough",
+		},
+		{
+			name: "tls-route-with-upstream-config",
 		},
 		{
 			name: "tcp-route-simple",
@@ -199,7 +201,6 @@ func TestTranslateRateLimitConfig(t *testing.T) {
 }
 
 func TestTranslateXdsWithExtension(t *testing.T) {
-	t.Skip()
 	testCases := []struct {
 		name           string
 		requireSecrets bool
