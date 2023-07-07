@@ -565,13 +565,13 @@ func (t *Translator) ProcessTLSRoutes(tlsRoutes []*v1alpha2.TLSRoute, gateways [
 	return relevantTLSRoutes
 }
 
-func getUpstreamConfig(obj client.Object) ir.UpstreamConfig {
+func getUpstreamConfig(route client.Object) ir.UpstreamConfig {
 	var (
 		enableProxyProtocol bool
 		maxConns            uint32
 	)
 
-	annotations := obj.GetAnnotations()
+	annotations := route.GetAnnotations()
 	if v := annotations[AnnotationRouteUpstreamProxyProtocol]; strings.ToLower(v) == "true" {
 		enableProxyProtocol = true
 	}
