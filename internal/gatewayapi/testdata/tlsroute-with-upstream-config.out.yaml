@@ -1,0 +1,100 @@
+gateways:
+- apiVersion: gateway.networking.k8s.io/v1beta1
+  kind: Gateway
+  metadata:
+    namespace: envoy-gateway
+    name: gateway-1
+  spec:
+    gatewayClassName: envoy-gateway-class
+    listeners:
+    - name: tls
+      protocol: TLS
+      port: 91
+      tls:
+        mode: Passthrough
+      allowedRoutes:
+        namespaces:
+          from: All
+  status:
+    listeners:
+    - name: tls
+      supportedKinds:
+      - group: gateway.networking.k8s.io
+        kind: TLSRoute
+      attachedRoutes: 1
+      conditions:
+      - type: Programmed
+        status: "True"
+        reason: Programmed
+        message: Sending translated listener configuration to the data plane
+      - type: Accepted
+        status: "True"
+        reason: Accepted
+        message: Listener has been successfully translated
+tlsRoutes:
+- apiVersion: gateway.networking.k8s.io/v1alpha2
+  kind: TLSRoute
+  metadata:
+    namespace: default
+    name: tlsroute-1
+    annotations:
+      cloud.teleport.dev/upstream-proxy-protocol: "true"
+      cloud.teleport.dev/upstream-max-connections: "10000"
+  spec:
+    parentRefs:
+    - namespace: envoy-gateway
+      name: gateway-1
+    hostnames:
+    - foo.com
+    rules:
+    - backendRefs:
+      - name: service-1
+        port: 8080
+  status:
+    parents:
+    - parentRef:
+        namespace: envoy-gateway
+        name: gateway-1
+      controllerName: gateway.envoyproxy.io/gatewayclass-controller
+      conditions:
+      - type: Accepted
+        status: "True"
+        reason: Accepted
+        message: Route is accepted
+      - type: ResolvedRefs
+        status: "True"
+        reason: ResolvedRefs
+        message: Resolved all the Object references for the Route
+xdsIR:
+  envoy-gateway-gateway-1:
+    tcp:
+    - listenerName: envoy-gateway-gateway-1-tls
+      routeName: envoy-gateway-gateway-1-tls-tlsroute-1
+      address: 0.0.0.0
+      port: 10091
+      tls:
+        snis:
+        - foo.com
+      destinations:
+      - host: 7.7.7.7
+        port: 8080
+        weight: 1
+      upstreamConfig:
+        enableProxyProtocol: true
+        maxConnections: 10000
+infraIR:
+  envoy-gateway-gateway-1:
+    proxy:
+      metadata:
+        labels:
+          gateway.envoyproxy.io/owning-gateway-name: gateway-1
+          gateway.envoyproxy.io/owning-gateway-namespace: envoy-gateway
+      name: envoy-gateway-gateway-1
+
+      listeners:
+      - address: ""
+        ports:
+        - name: tls
+          protocol: "TLS"
+          servicePort: 91
+          containerPort: 10091
