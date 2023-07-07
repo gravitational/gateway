@@ -119,7 +119,7 @@ xds:
           - name: envoy.filters.listener.tls_inspector
             typedConfig:
               '@type': type.googleapis.com/envoy.extensions.filters.listener.tls_inspector.v3.TlsInspector
-          name: default-eg-tls-passthrough-backend
+          name: default-eg-tls-passthrough
     - activeState:
         listener:
           '@type': type.googleapis.com/envoy.config.listener.v3.Listener
@@ -148,7 +148,7 @@ xds:
                     path: /dev/stdout
                 cluster: default-eg-tcp-backend
                 statPrefix: tcp
-          name: default-eg-tcp-backend
+          name: default-eg-tcp
     - activeState:
         listener:
           '@type': type.googleapis.com/envoy.config.listener.v3.Listener

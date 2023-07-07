@@ -479,7 +479,7 @@
 									"@type": "type.googleapis.com/envoy.extensions.filters.listener.tls_inspector.v3.TlsInspector"
 								}
 							}],
-							"name": "default-eg-tls-passthrough-backend"
+							"name": "default-eg-tls-passthrough"
 						}
 					}
 				}, {
@@ -521,7 +521,7 @@
 									}
 								}]
 							}],
-							"name": "default-eg-tcp-backend"
+							"name": "default-eg-tcp"
 						}
 					}
 				}, {

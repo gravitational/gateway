@@ -1,5 +1,6 @@
 tcp:
-- name: "tcp-route-simple"
+- listenerName: "tcp"
+  routeName: "tcp-route-simple"
   address: "0.0.0.0"
   port: 10080
   destinations:
@@ -7,7 +8,8 @@ tcp:
     port: 50000
   - host: "5.6.7.8"
     port: 50001
-- name: "tcp-route-simple-1"
+- listenerName: "tcp"
+  routeName: "tcp-route-simple-1"
   address: "0.0.0.0"
   port: 10080
   destinations:
@@ -15,7 +17,8 @@ tcp:
     port: 50000
   - host: "5.6.7.8"
     port: 50001
-- name: "tcp-route-simple-2"
+- listenerName: "tcp"
+  routeName: "tcp-route-simple-2"
   address: "0.0.0.0"
   port: 10080
   destinations:
@@ -23,7 +26,8 @@ tcp:
     port: 50000
   - host: "5.6.7.8"
     port: 50001
-- name: "tcp-route-simple-3"
+- listenerName: "tcp"
+  routeName: "tcp-route-simple-3"
   address: "0.0.0.0"
   port: 10080
   destinations:
@@ -31,7 +35,8 @@ tcp:
     port: 50000
   - host: "5.6.7.8"
     port: 50001
-- name: "tcp-route-simple-4"
+- listenerName: "tcp"
+  routeName: "tcp-route-simple-4"
   address: "0.0.0.0"
   port: 10080
   destinations:

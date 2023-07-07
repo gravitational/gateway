@@ -66,32 +66,38 @@ var (
 
 	// TCPListener
 	happyTCPListenerTLSPassthrough = TCPListener{
-		Name:         "happy",
+		ListenerName: "happy-listener",
+		RouteName:    "happy-route",
 		Address:      "0.0.0.0",
 		Port:         80,
 		TLS:          &TLSInspectorConfig{SNIs: []string{"example.com"}},
 		Destinations: []*RouteDestination{&happyRouteDestination},
 	}
 	emptySNITCPListenerTLSPassthrough = TCPListener{
-		Name:         "empty-sni",
+		ListenerName: "empty-sni-listener",
+		RouteName:    "empty-sni-route",
 		Address:      "0.0.0.0",
 		Port:         80,
 		Destinations: []*RouteDestination{&happyRouteDestination},
 	}
 	invalidNameTCPListenerTLSPassthrough = TCPListener{
+		RouteName:    "invalid-listener-name-route",
 		Address:      "0.0.0.0",
 		Port:         80,
 		TLS:          &TLSInspectorConfig{SNIs: []string{"example.com"}},
 		Destinations: []*RouteDestination{&happyRouteDestination},
 	}
 	invalidAddrTCPListenerTLSPassthrough = TCPListener{
-		Name:         "invalid-addr",
+		ListenerName: "invalid-addr-listener",
+		RouteName:    "invalid-addr-route",
 		Address:      "1.0.0",
 		Port:         80,
 		TLS:          &TLSInspectorConfig{SNIs: []string{"example.com"}},
 		Destinations: []*RouteDestination{&happyRouteDestination},
 	}
 	invalidSNITCPListenerTLSPassthrough = TCPListener{
+		ListenerName: "invalid-sni-listener",
+		RouteName:    "invalid-sni-route",
 		Address:      "0.0.0.0",
 		Port:         80,
 		TLS:          &TLSInspectorConfig{SNIs: []string{}},
