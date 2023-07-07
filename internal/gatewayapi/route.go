@@ -21,7 +21,7 @@ import (
 const (
 	// AnnotationRouteUpstreamProxyProtocol enables proxy protocol for a given route. Currently
 	// only TLSRoutes support this annotation. The value is expected to be set to "true",
-	// case-insenstive, to enable proxy protocol. All other values will be ignored.
+	// case-insensitive, to enable proxy protocol. All other values will be ignored.
 	AnnotationRouteUpstreamProxyProtocol = "cloud.teleport.dev/upstream-proxy-protocol"
 	// AnnotationRouteUpstreamMaxConnections specifies the max upstream connections for a given
 	// route. Currently only TLSRoutes support this annotation. The value must be a valid uint32.
