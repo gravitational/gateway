@@ -16,6 +16,11 @@ import (
 	"github.com/envoyproxy/gateway/internal/ir"
 )
 
+const (
+	// AnnotationTLSRouteProtos specifies the ALPN protos matched by a TLSRoute.
+	AnnotationTLSRouteProtos = "cloud.teleport.dev/protos"
+)
+
 var _ RoutesTranslator = (*Translator)(nil)
 
 type RoutesTranslator interface {
@@ -607,6 +612,11 @@ func (t *Translator) processTLSRouteParentRefs(tlsRoute *TLSRouteContext, resour
 			continue
 		}
 
+		var protos []string
+		if v := tlsRoute.Annotations[AnnotationTLSRouteProtos]; v != "" {
+			protos = strings.Split(v, ",")
+		}
+
 		var hasHostnameIntersection bool
 		for _, listener := range parentRef.listeners {
 			hosts := computeHosts(tlsRoute.GetHostnames(), listener.Hostname)
@@ -626,7 +636,8 @@ func (t *Translator) processTLSRouteParentRefs(tlsRoute *TLSRouteContext, resour
 				Address:      "0.0.0.0",
 				Port:         uint32(containerPort),
 				TLS: &ir.TLSInspectorConfig{
-					SNIs: hosts,
+					SNIs:   hosts,
+					Protos: protos,
 				},
 				Destinations: routeDestinations,
 			}

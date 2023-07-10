@@ -6,6 +6,8 @@ tcp:
   tls:
     snis:
     - foo.com
+    protos:
+    - customproto
   destinations:
   - host: "1.2.3.4"
     port: 50000
