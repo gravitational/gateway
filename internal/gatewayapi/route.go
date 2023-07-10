@@ -7,9 +7,11 @@ package gatewayapi
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/gateway-api/apis/v1alpha2"
 	"sigs.k8s.io/gateway-api/apis/v1beta1"
 
@@ -17,6 +19,13 @@ import (
 )
 
 const (
+	// AnnotationRouteUpstreamProxyProtocol enables proxy protocol for a given route. Currently
+	// only TLSRoutes support this annotation. The value is expected to be set to "true",
+	// case-insensitive, to enable proxy protocol. All other values will be ignored.
+	AnnotationRouteUpstreamProxyProtocol = "cloud.teleport.dev/upstream-proxy-protocol"
+	// AnnotationRouteUpstreamMaxConnections specifies the max upstream connections for a given
+	// route. Currently only TLSRoutes support this annotation. The value must be a valid uint32.
+	AnnotationRouteUpstreamMaxConnections = "cloud.teleport.dev/upstream-max-connections"
 	// AnnotationTLSRouteProtos specifies the ALPN protos matched by a TLSRoute.
 	AnnotationTLSRouteProtos = "cloud.teleport.dev/protos"
 )
@@ -558,6 +567,30 @@ func (t *Translator) ProcessTLSRoutes(tlsRoutes []*v1alpha2.TLSRoute, gateways [
 	return relevantTLSRoutes
 }
 
+func getUpstreamConfig(route client.Object) ir.UpstreamConfig {
+	var (
+		enableProxyProtocol bool
+		maxConns            uint32
+	)
+
+	annotations := route.GetAnnotations()
+	if v := annotations[AnnotationRouteUpstreamProxyProtocol]; strings.ToLower(v) == "true" {
+		enableProxyProtocol = true
+	}
+
+	if v := annotations[AnnotationRouteUpstreamMaxConnections]; v != "" {
+		uInt, err := strconv.ParseUint(v, 10, 32)
+		if err == nil {
+			maxConns = uint32(uInt)
+		}
+	}
+
+	return ir.UpstreamConfig{
+		EnableProxyProtocol: enableProxyProtocol,
+		MaxConnections:      maxConns,
+	}
+}
+
 func (t *Translator) processTLSRouteParentRefs(tlsRoute *TLSRouteContext, resources *Resources, xdsIR XdsIRMap) {
 	for _, parentRef := range tlsRoute.parentRefs {
 
@@ -639,8 +672,10 @@ func (t *Translator) processTLSRouteParentRefs(tlsRoute *TLSRouteContext, resour
 					SNIs:   hosts,
 					Protos: protos,
 				},
-				Destinations: routeDestinations,
+				Destinations:   routeDestinations,
+				UpstreamConfig: getUpstreamConfig(tlsRoute),
 			}
+
 			gwXdsIR := xdsIR[irKey]
 			gwXdsIR.TCP = append(gwXdsIR.TCP, irListener)
 

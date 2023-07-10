@@ -13,8 +13,11 @@ import (
 	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	listenerv3 "github.com/envoyproxy/go-control-plane/envoy/config/listener/v3"
 	routev3 "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
+	proxyprotocolv3 "github.com/envoyproxy/go-control-plane/envoy/extensions/transport_sockets/proxy_protocol/v3"
+	rawbufferv3 "github.com/envoyproxy/go-control-plane/envoy/extensions/transport_sockets/raw_buffer/v3"
 	resourcev3 "github.com/envoyproxy/go-control-plane/pkg/resource/v3"
 	"github.com/tetratelabs/multierror"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	extensionTypes "github.com/envoyproxy/gateway/internal/extension/types"
 	"github.com/envoyproxy/gateway/internal/ir"
@@ -198,13 +201,36 @@ func (t *Translator) processHTTPListenerXdsTranslation(tCtx *types.ResourceVersi
 
 func processTCPListenerXdsTranslation(tCtx *types.ResourceVersionTable, tcpListeners []*ir.TCPListener) error {
 	for _, tcpListener := range tcpListeners {
+
+		// TODO(dboslee):Keep an eye on
+		// https://github.com/envoyproxy/gateway/issues/1328 and
+		// https://github.com/kubernetes-sigs/gateway-api/issues/1955
+		// to see if proxy protocol support lands in gateway-api or envoyproxy/gateway.
+
+		var (
+			tSocket *corev3.TransportSocket
+			cbs     *clusterv3.CircuitBreakers
+			err     error
+		)
+		if tcpListener.UpstreamConfig.EnableProxyProtocol {
+			tSocket, err = buildXdsProxyProtocolTCPSocket()
+			if err != nil {
+				return err
+			}
+		}
+
+		if maxConns := tcpListener.UpstreamConfig.MaxConnections; maxConns > 0 {
+			cbs = buildXdsClusterCircuitBreaker(maxConns)
+		}
+
 		// 1:1 between IR TCPListener and xDS Cluster
 		addXdsCluster(tCtx, addXdsClusterArgs{
-			name:         tcpListener.RouteName,
-			destinations: tcpListener.Destinations,
-			tSocket:      nil,
-			protocol:     DefaultProtocol,
-			endpoint:     Static,
+			name:            tcpListener.RouteName,
+			destinations:    tcpListener.Destinations,
+			tSocket:         tSocket,
+			protocol:        DefaultProtocol,
+			endpoint:        Static,
+			circuitBreakers: cbs,
 		})
 
 		// Search for an existing listener, if it does not exist, create one.
@@ -219,6 +245,39 @@ func processTCPListenerXdsTranslation(tCtx *types.ResourceVersionTable, tcpListe
 		}
 	}
 	return nil
+}
+
+func buildXdsProxyProtocolTCPSocket() (*corev3.TransportSocket, error) {
+	rawBuffer := &rawbufferv3.RawBuffer{}
+	rawBufferAny, err := anypb.New(rawBuffer)
+	if err != nil {
+		return nil, err
+	}
+
+	proxyProtocol := &proxyprotocolv3.ProxyProtocolUpstreamTransport{
+		Config: &corev3.ProxyProtocolConfig{
+			Version: corev3.ProxyProtocolConfig_V2,
+		},
+		TransportSocket: &corev3.TransportSocket{
+			Name: "envoy.transport_sockets.raw_buffer",
+			ConfigType: &corev3.TransportSocket_TypedConfig{
+				TypedConfig: rawBufferAny,
+			},
+		},
+	}
+
+	proxyProtocolAny, err := anypb.New(proxyProtocol)
+	if err != nil {
+		return nil, err
+	}
+
+	tSocket := &corev3.TransportSocket{
+		Name: "envoy.transport_sockets.upstream_proxy_protocol",
+		ConfigType: &corev3.TransportSocket_TypedConfig{
+			TypedConfig: proxyProtocolAny,
+		},
+	}
+	return tSocket, nil
 }
 
 func processUDPListenerXdsTranslation(tCtx *types.ResourceVersionTable, udpListeners []*ir.UDPListener) error {
@@ -280,7 +339,7 @@ func findXdsCluster(tCtx *types.ResourceVersionTable, name string) *clusterv3.Cl
 }
 
 func addXdsCluster(tCtx *types.ResourceVersionTable, args addXdsClusterArgs) {
-	xdsCluster := buildXdsCluster(args.name, args.tSocket, args.protocol, args.endpoint)
+	xdsCluster := buildXdsCluster(args.name, args.tSocket, args.protocol, args.endpoint, args.circuitBreakers)
 	xdsEndpoints := buildXdsClusterLoadAssignment(args.name, args.destinations)
 	// Use EDS for static endpoints
 	if args.endpoint == Static {
@@ -308,11 +367,12 @@ func findXdsRouteConfig(tCtx *types.ResourceVersionTable, name string) *routev3.
 }
 
 type addXdsClusterArgs struct {
-	name         string
-	destinations []*ir.RouteDestination
-	tSocket      *corev3.TransportSocket
-	protocol     ProtocolType
-	endpoint     EndpointType
+	name            string
+	destinations    []*ir.RouteDestination
+	tSocket         *corev3.TransportSocket
+	protocol        ProtocolType
+	endpoint        EndpointType
+	circuitBreakers *clusterv3.CircuitBreakers
 }
 
 type ProtocolType int

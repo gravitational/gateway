@@ -76,6 +76,9 @@ func TestTranslateXds(t *testing.T) {
 			name: "tls-route-passthrough",
 		},
 		{
+			name: "tls-route-with-upstream-config",
+		},
+		{
 			name: "tcp-route-simple",
 		},
 		{

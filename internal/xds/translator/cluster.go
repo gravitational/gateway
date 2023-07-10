@@ -13,6 +13,7 @@ import (
 	endpointv3 "github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3"
 	httpv3 "github.com/envoyproxy/go-control-plane/envoy/extensions/upstreams/http/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/resource/v3"
+	"github.com/golang/protobuf/ptypes/wrappers"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -24,7 +25,20 @@ const (
 	extensionOptionsKey = "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
 )
 
-func buildXdsCluster(routeName string, tSocket *corev3.TransportSocket, protocol ProtocolType, endpointType EndpointType) *clusterv3.Cluster {
+func buildXdsClusterCircuitBreaker(maxConns uint32) *clusterv3.CircuitBreakers {
+	return &clusterv3.CircuitBreakers{
+		// Increase default connection limits per upstream cluster from 1024.
+		Thresholds: []*clusterv3.CircuitBreakers_Thresholds{
+			{
+				Priority:           corev3.RoutingPriority_DEFAULT,
+				MaxConnections:     &wrappers.UInt32Value{Value: maxConns},
+				MaxPendingRequests: wrapperspb.UInt32(maxConns),
+			},
+		},
+	}
+}
+
+func buildXdsCluster(routeName string, tSocket *corev3.TransportSocket, protocol ProtocolType, endpointType EndpointType, cbs *clusterv3.CircuitBreakers) *clusterv3.Cluster {
 	clusterName := routeName
 	cluster := &clusterv3.Cluster{
 		Name:            clusterName,
@@ -39,6 +53,10 @@ func buildXdsCluster(routeName string, tSocket *corev3.TransportSocket, protocol
 
 	if tSocket != nil {
 		cluster.TransportSocket = tSocket
+	}
+
+	if cbs != nil {
+		cluster.CircuitBreakers = cbs
 	}
 
 	if endpointType == Static {
