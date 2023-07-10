@@ -82,6 +82,8 @@ func (i *Infra) expectedRateLimitDeployment(infra *ir.RateLimitInfra) *appsv1.De
 					RestartPolicy:                 corev1.RestartPolicyAlways,
 					SchedulerName:                 "default-scheduler",
 					SecurityContext:               rateLimitDeployment.Pod.SecurityContext,
+					Affinity:                      rateLimitDeployment.Pod.Affinity,
+					Tolerations:                   rateLimitDeployment.Pod.Tolerations,
 					Volumes: []corev1.Volume{
 						{
 							Name: rateLimitInfraName,

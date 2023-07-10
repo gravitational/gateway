@@ -38,8 +38,6 @@ teleport-push: teleport-build push
 .PHONY: teleport-build-multiarch
 teleport-build-multiarch: go.build.multiarch image-multiarch
 
-teleport-helm-%: RELEASE_VERSION
-
 .PHONY: teleport-helm-package
 teleport-helm-package: ## Package envoy gateway helm chart with teleprot specific overrides.
 teleport-helm-package: helm-package
