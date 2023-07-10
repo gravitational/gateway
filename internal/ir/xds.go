@@ -665,6 +665,12 @@ type TLSInspectorConfig struct {
 	// supported, and values like *w.example.com are invalid.
 	// SNIs are used only in case of TLS Passthrough.
 	SNIs []string
+	// Protos specifies application protocols that are compared against the
+	// ALPN protocols of a new connection.
+	// Wildcard protocols are supported in the prefix form.
+	// Partial wildcards are not supported.
+	// Protos are used only in case of TLS Passthrough.
+	Protos []string
 }
 
 func (t TLSInspectorConfig) Validate() error {

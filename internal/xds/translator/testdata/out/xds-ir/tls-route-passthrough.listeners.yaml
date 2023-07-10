@@ -13,6 +13,8 @@
       portValue: 10080
   filterChains:
   - filterChainMatch:
+      applicationProtocols:
+      - customproto
       serverNames:
       - foo.com
     filters:
