@@ -28,6 +28,10 @@ const (
 	AnnotationRouteUpstreamMaxConnections = "cloud.teleport.dev/upstream-max-connections"
 	// AnnotationTLSRouteProtos specifies the ALPN protos matched by a TLSRoute.
 	AnnotationTLSRouteProtos = "cloud.teleport.dev/protos"
+	// AnnotationGatewayDownstreamProxyProtocol enables proxy protocol for a gateways listeners.
+	// Currently this only applies to TCP listeners. The value is expected to be set to "true",
+	// case-insensitive, to enable proxy protocol. All other values will be ignored.
+	AnnotationGatewayDownstreamProxyProtocol = "cloud.teleport.dev/downstream-proxy-protocol"
 )
 
 var _ RoutesTranslator = (*Translator)(nil)
@@ -591,6 +595,17 @@ func getUpstreamConfig(route client.Object) ir.UpstreamConfig {
 	}
 }
 
+func getDownstreamConfig(gateway *v1beta1.Gateway) ir.DownstreamConfig {
+	var enableProxyProtocol bool
+	annotations := gateway.GetAnnotations()
+	if v := annotations[AnnotationGatewayDownstreamProxyProtocol]; strings.ToLower(v) == "true" {
+		enableProxyProtocol = true
+	}
+	return ir.DownstreamConfig{
+		EnableProxyProtocol: enableProxyProtocol,
+	}
+}
+
 func (t *Translator) processTLSRouteParentRefs(tlsRoute *TLSRouteContext, resources *Resources, xdsIR XdsIRMap) {
 	for _, parentRef := range tlsRoute.parentRefs {
 
@@ -672,8 +687,9 @@ func (t *Translator) processTLSRouteParentRefs(tlsRoute *TLSRouteContext, resour
 					SNIs:   hosts,
 					Protos: protos,
 				},
-				Destinations:   routeDestinations,
-				UpstreamConfig: getUpstreamConfig(tlsRoute),
+				Destinations:     routeDestinations,
+				UpstreamConfig:   getUpstreamConfig(tlsRoute),
+				DownstreamConfig: getDownstreamConfig(listener.gateway),
 			}
 
 			gwXdsIR := xdsIR[irKey]

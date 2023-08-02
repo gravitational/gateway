@@ -13,9 +13,11 @@ import (
 	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	listenerv3 "github.com/envoyproxy/go-control-plane/envoy/config/listener/v3"
 	routev3 "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
+	filterproxyprotocol "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/listener/proxy_protocol/v3"
 	proxyprotocolv3 "github.com/envoyproxy/go-control-plane/envoy/extensions/transport_sockets/proxy_protocol/v3"
 	rawbufferv3 "github.com/envoyproxy/go-control-plane/envoy/extensions/transport_sockets/raw_buffer/v3"
 	resourcev3 "github.com/envoyproxy/go-control-plane/pkg/resource/v3"
+	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
 	"github.com/tetratelabs/multierror"
 	"google.golang.org/protobuf/types/known/anypb"
 
@@ -240,10 +242,36 @@ func processTCPListenerXdsTranslation(tCtx *types.ResourceVersionTable, tcpListe
 			tCtx.AddXdsResource(resourcev3.ListenerType, xdsListener)
 		}
 
+		if tcpListener.DownstreamConfig.EnableProxyProtocol {
+			if err := addXdsProxyProtocolFilter(xdsListener); err != nil {
+				return err
+			}
+		}
+
 		if err := addXdsTCPFilterChain(xdsListener, tcpListener, tcpListener.RouteName); err != nil {
 			return err
 		}
 	}
+	return nil
+}
+
+func addXdsProxyProtocolFilter(xdsListener *listenerv3.Listener) error {
+	for _, filter := range xdsListener.ListenerFilters {
+		if filter.Name == wellknown.ProxyProtocol {
+			return nil
+		}
+	}
+	proxyProtocolConfig := &filterproxyprotocol.ProxyProtocol{}
+	proxyProtocolAny, err := anypb.New(proxyProtocolConfig)
+	if err != nil {
+		return err
+	}
+	xdsListener.ListenerFilters = append([]*listenerv3.ListenerFilter{{
+		Name: wellknown.ProxyProtocol,
+		ConfigType: &listenerv3.ListenerFilter_TypedConfig{
+			TypedConfig: proxyProtocolAny,
+		},
+	}}, xdsListener.ListenerFilters...)
 	return nil
 }
 

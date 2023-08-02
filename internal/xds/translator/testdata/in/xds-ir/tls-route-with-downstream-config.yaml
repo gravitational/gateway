@@ -1,0 +1,13 @@
+tcp:
+- listenerName: "tls-upstream-config-listener"
+  routeName: "tls-upstream-config-route"
+  address: "0.0.0.0"
+  port: 10080
+  tls:
+    snis:
+    - foo.com
+  destinations:
+  - host: "1.2.3.4"
+    port: 50000
+  downstreamConfig:
+    enableProxyProtocol: true
