@@ -1,0 +1,21 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade,post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  name: {{ include "eg.fullname" . }}-admission-server
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    name: {{ include "eg.fullname" . }}-webhook-server
+  {{- include "eg.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: https-webhook
+      port: 443
+      targetPort: 8443
+  selector:
+    name: {{ include "eg.fullname" . }}-admission-server

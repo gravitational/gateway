@@ -1,0 +1,40 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "eg.fullname" . }}-admission-patch
+  labels:
+    name: {{ include "eg.fullname" . }}-webhook
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  namespace: '{{ .Release.Namespace }}'
+spec:
+  template:
+    metadata:
+      name: {{ include "eg.fullname" . }}-admission-patch
+      labels:
+        name: {{ include "eg.fullname" . }}-webhook
+    spec:
+      containers:
+        - name: patch
+          image: registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.1.1
+          imagePullPolicy: IfNotPresent
+          args:
+            - patch
+            - --webhook-name={{ include "eg.fullname" . }}-admission
+            - --namespace={{ .Release.Namespace }}
+            - --patch-mutating=false
+            - --patch-validating=true
+            - --secret-name={{ include "eg.fullname" . }}-admission
+            - --patch-failure-policy=Fail
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+      restartPolicy: OnFailure
+      serviceAccountName: {{ include "eg.fullname" . }}-admission
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 2000
