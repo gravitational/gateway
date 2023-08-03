@@ -618,6 +618,13 @@ type TCPListener struct {
 	Destinations []*RouteDestination
 	// UpstreamConfig provides configuration for upstream connections.
 	UpstreamConfig UpstreamConfig
+	// DownstreamConfig provides configuration for downstream connections.
+	DownstreamConfig DownstreamConfig
+}
+
+type DownstreamConfig struct {
+	// EnableProxyProtocol enables proxy protocol v2 for connections to downstream endpoints.
+	EnableProxyProtocol bool
 }
 
 // UpstreamConfig holds the upstream cluster configuration.

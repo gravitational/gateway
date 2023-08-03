@@ -34,6 +34,7 @@ func (i *Infra) createOrUpdateService(ctx context.Context, svc *corev1.Service) 
 		}
 	} else {
 		// Update if current value is different.
+		svc.Spec.LoadBalancerClass = current.Spec.LoadBalancerClass
 		if !reflect.DeepEqual(svc.Spec, current.Spec) {
 			svc.ResourceVersion = current.ResourceVersion
 			svc.UID = current.UID
