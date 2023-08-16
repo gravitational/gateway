@@ -57,15 +57,17 @@ type Xds struct {
 	UDP []*UDPListener
 }
 
+// Equal implements the Comparable interface used by watchable.DeepEqual to skip unnecessary updates.
 func (x1 *Xds) Equal(x2 *Xds) bool {
 	x1 = x1.DeepCopy()
-	x1.Sort()
+	x1.sort()
 	x2 = x2.DeepCopy()
-	x2.Sort()
+	x2.sort()
 	return reflect.DeepEqual(x1, x2)
 }
 
-func (x *Xds) Sort() {
+// sort ensures the listeners are in a consistent order.
+func (x *Xds) sort() {
 	slices.SortFunc(x.HTTP, func(l1, l2 *HTTPListener) bool {
 		return l1.Name < l2.Name
 	})
