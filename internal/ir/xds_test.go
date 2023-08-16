@@ -8,6 +8,7 @@ package ir
 import (
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -658,6 +659,65 @@ func TestValidateTLSListenerConfig(t *testing.T) {
 			} else {
 				require.EqualError(t, test.input.Validate(), test.want.Error())
 			}
+		})
+	}
+}
+
+func TestEqualXds(t *testing.T) {
+	tests := []struct {
+		desc  string
+		a     *Xds
+		b     *Xds
+		equal bool
+	}{
+		{
+			desc: "out of order tcp listeners are equal",
+			a: &Xds{
+				TCP: []*TCPListener{
+					{ListenerName: "listener-1", RouteName: "route-1"},
+					{ListenerName: "listener-2", RouteName: "route-2"},
+				},
+			},
+			b: &Xds{
+				TCP: []*TCPListener{
+					{ListenerName: "listener-2", RouteName: "route-2"},
+					{ListenerName: "listener-1", RouteName: "route-1"},
+				},
+			},
+			equal: true,
+		},
+		{
+			desc: "additional destination is not equal",
+			a: &Xds{
+				TCP: []*TCPListener{
+					{
+						ListenerName: "listener-1",
+						RouteName:    "route-1",
+						Destinations: []*RouteDestination{
+							{Host: "host-1"},
+						},
+					},
+				},
+			},
+			b: &Xds{
+				TCP: []*TCPListener{
+					{
+						ListenerName: "listener-1",
+						RouteName:    "route-1",
+						Destinations: []*RouteDestination{
+							{Host: "host-1"},
+							{Host: "host-2"},
+						},
+					},
+				},
+			},
+			equal: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			require.Equal(t, tc.equal, cmp.Equal(tc.a, tc.b))
 		})
 	}
 }
