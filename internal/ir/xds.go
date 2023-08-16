@@ -8,8 +8,10 @@ package ir
 import (
 	"errors"
 	"net"
+	"reflect"
 
 	"github.com/tetratelabs/multierror"
+	"golang.org/x/exp/slices"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -53,6 +55,28 @@ type Xds struct {
 	TCP []*TCPListener
 	// UDP Listeners exposed by the gateway.
 	UDP []*UDPListener
+}
+
+// Equal implements the Comparable interface used by watchable.DeepEqual to skip unnecessary updates.
+func (x1 *Xds) Equal(x2 *Xds) bool {
+	x1 = x1.DeepCopy()
+	x1.sort()
+	x2 = x2.DeepCopy()
+	x2.sort()
+	return reflect.DeepEqual(x1, x2)
+}
+
+// sort ensures the listeners are in a consistent order.
+func (x *Xds) sort() {
+	slices.SortFunc(x.HTTP, func(l1, l2 *HTTPListener) bool {
+		return l1.Name < l2.Name
+	})
+	slices.SortFunc(x.TCP, func(l1, l2 *TCPListener) bool {
+		return l1.ListenerName+l1.RouteName < l2.ListenerName+l2.RouteName
+	})
+	slices.SortFunc(x.UDP, func(l1, l2 *UDPListener) bool {
+		return l1.Name < l2.Name
+	})
 }
 
 // Validate the fields within the Xds structure.
