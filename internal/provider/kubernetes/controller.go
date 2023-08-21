@@ -1054,7 +1054,7 @@ func (r *gatewayAPIReconciler) watchResources(ctx context.Context, mgr manager.M
 	// Only enqueue GatewayClass objects that match this Envoy Gateway's controller name.
 	if err := c.Watch(
 		&source.Kind{Type: &gwapiv1b1.GatewayClass{}},
-		&handler.EnqueueRequestForObject{},
+		handler.EnqueueRequestsFromMapFunc(r.enqueueClass),
 		predicate.NewPredicateFuncs(r.hasMatchingController),
 	); err != nil {
 		return err
@@ -1063,7 +1063,7 @@ func (r *gatewayAPIReconciler) watchResources(ctx context.Context, mgr manager.M
 	// Only enqueue EnvoyProxy objects that match this Envoy Gateway's GatewayClass.
 	if err := c.Watch(
 		&source.Kind{Type: &egcfgv1a1.EnvoyProxy{}},
-		handler.EnqueueRequestsFromMapFunc(r.enqueueManagedClass),
+		handler.EnqueueRequestsFromMapFunc(r.enqueueClass),
 		predicate.ResourceVersionChangedPredicate{},
 	); err != nil {
 		return err
@@ -1072,7 +1072,7 @@ func (r *gatewayAPIReconciler) watchResources(ctx context.Context, mgr manager.M
 	// Watch Gateway CRUDs and reconcile affected GatewayClass.
 	if err := c.Watch(
 		&source.Kind{Type: &gwapiv1b1.Gateway{}},
-		&handler.EnqueueRequestForObject{},
+		handler.EnqueueRequestsFromMapFunc(r.enqueueClass),
 		predicate.NewPredicateFuncs(r.validateGatewayForReconcile),
 	); err != nil {
 		return err
@@ -1084,7 +1084,7 @@ func (r *gatewayAPIReconciler) watchResources(ctx context.Context, mgr manager.M
 	// Watch HTTPRoute CRUDs and process affected Gateways.
 	if err := c.Watch(
 		&source.Kind{Type: &gwapiv1b1.HTTPRoute{}},
-		&handler.EnqueueRequestForObject{},
+		handler.EnqueueRequestsFromMapFunc(r.enqueueClass),
 	); err != nil {
 		return err
 	}
@@ -1095,7 +1095,7 @@ func (r *gatewayAPIReconciler) watchResources(ctx context.Context, mgr manager.M
 	// Watch GRPCRoute CRUDs and process affected Gateways.
 	if err := c.Watch(
 		&source.Kind{Type: &gwapiv1a2.GRPCRoute{}},
-		&handler.EnqueueRequestForObject{},
+		handler.EnqueueRequestsFromMapFunc(r.enqueueClass),
 	); err != nil {
 		return err
 	}
@@ -1106,7 +1106,7 @@ func (r *gatewayAPIReconciler) watchResources(ctx context.Context, mgr manager.M
 	// Watch TLSRoute CRUDs and process affected Gateways.
 	if err := c.Watch(
 		&source.Kind{Type: &gwapiv1a2.TLSRoute{}},
-		&handler.EnqueueRequestForObject{},
+		handler.EnqueueRequestsFromMapFunc(r.enqueueClass),
 	); err != nil {
 		return err
 	}
@@ -1117,7 +1117,7 @@ func (r *gatewayAPIReconciler) watchResources(ctx context.Context, mgr manager.M
 	// Watch UDPRoute CRUDs and process affected Gateways.
 	if err := c.Watch(
 		&source.Kind{Type: &gwapiv1a2.UDPRoute{}},
-		&handler.EnqueueRequestForObject{},
+		handler.EnqueueRequestsFromMapFunc(r.enqueueClass),
 	); err != nil {
 		return err
 	}
@@ -1128,7 +1128,7 @@ func (r *gatewayAPIReconciler) watchResources(ctx context.Context, mgr manager.M
 	// Watch TCPRoute CRUDs and process affected Gateways.
 	if err := c.Watch(
 		&source.Kind{Type: &gwapiv1a2.TCPRoute{}},
-		&handler.EnqueueRequestForObject{},
+		handler.EnqueueRequestsFromMapFunc(r.enqueueClass),
 	); err != nil {
 		return err
 	}
@@ -1139,7 +1139,7 @@ func (r *gatewayAPIReconciler) watchResources(ctx context.Context, mgr manager.M
 	// Watch Service CRUDs and process affected *Route objects.
 	if err := c.Watch(
 		&source.Kind{Type: &corev1.Service{}},
-		&handler.EnqueueRequestForObject{},
+		handler.EnqueueRequestsFromMapFunc(r.enqueueClass),
 		predicate.NewPredicateFuncs(r.validateServiceForReconcile)); err != nil {
 		return err
 	}
@@ -1147,7 +1147,7 @@ func (r *gatewayAPIReconciler) watchResources(ctx context.Context, mgr manager.M
 	// Watch Secret CRUDs and process affected Gateways.
 	if err := c.Watch(
 		&source.Kind{Type: &corev1.Secret{}},
-		&handler.EnqueueRequestForObject{},
+		handler.EnqueueRequestsFromMapFunc(r.enqueueClass),
 		predicate.NewPredicateFuncs(r.validateSecretForReconcile),
 	); err != nil {
 		return err
@@ -1156,7 +1156,7 @@ func (r *gatewayAPIReconciler) watchResources(ctx context.Context, mgr manager.M
 	// Watch ReferenceGrant CRUDs and process affected Gateways.
 	if err := c.Watch(
 		&source.Kind{Type: &gwapiv1a2.ReferenceGrant{}},
-		&handler.EnqueueRequestForObject{},
+		handler.EnqueueRequestsFromMapFunc(r.enqueueClass),
 	); err != nil {
 		return err
 	}
@@ -1167,7 +1167,7 @@ func (r *gatewayAPIReconciler) watchResources(ctx context.Context, mgr manager.M
 	// Watch Deployment CRUDs and process affected Gateways.
 	if err := c.Watch(
 		&source.Kind{Type: &appsv1.Deployment{}},
-		&handler.EnqueueRequestForObject{},
+		handler.EnqueueRequestsFromMapFunc(r.enqueueClass),
 		predicate.NewPredicateFuncs(r.validateDeploymentForReconcile),
 	); err != nil {
 		return err
@@ -1176,7 +1176,7 @@ func (r *gatewayAPIReconciler) watchResources(ctx context.Context, mgr manager.M
 	// Watch AuthenticationFilter CRUDs and enqueue associated HTTPRoute objects.
 	if err := c.Watch(
 		&source.Kind{Type: &egv1a1.AuthenticationFilter{}},
-		&handler.EnqueueRequestForObject{},
+		handler.EnqueueRequestsFromMapFunc(r.enqueueClass),
 		predicate.NewPredicateFuncs(r.httpRoutesForAuthenticationFilter)); err != nil {
 		return err
 	}
@@ -1184,7 +1184,7 @@ func (r *gatewayAPIReconciler) watchResources(ctx context.Context, mgr manager.M
 	// Watch RateLimitFilter CRUDs and enqueue associated HTTPRoute objects.
 	if err := c.Watch(
 		&source.Kind{Type: &egv1a1.RateLimitFilter{}},
-		&handler.EnqueueRequestForObject{},
+		handler.EnqueueRequestsFromMapFunc(r.enqueueClass),
 		predicate.NewPredicateFuncs(r.httpRoutesForRateLimitFilter)); err != nil {
 		return err
 	}
@@ -1196,12 +1196,18 @@ func (r *gatewayAPIReconciler) watchResources(ctx context.Context, mgr manager.M
 		u := &unstructured.Unstructured{}
 		u.SetGroupVersionKind(gvk)
 		if err := c.Watch(&source.Kind{Type: u},
-			&handler.EnqueueRequestForObject{}); err != nil {
+			handler.EnqueueRequestsFromMapFunc(r.enqueueClass)); err != nil {
 			return err
 		}
 		r.log.Info("Watching additional resource", "resource", gvk.String())
 	}
 	return nil
+}
+
+func (r *gatewayAPIReconciler) enqueueClass(obj client.Object) []reconcile.Request {
+	return []reconcile.Request{{NamespacedName: types.NamespacedName{
+		Name: string(r.classController),
+	}}}
 }
 
 func (r *gatewayAPIReconciler) enqueueManagedClass(obj client.Object) []reconcile.Request {
