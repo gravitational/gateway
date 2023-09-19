@@ -53,7 +53,7 @@ require (
 	golang.org/x/text v0.7.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
+	gopkg.in/yaml.v3 v3.0.0 // indirect
 	sigs.k8s.io/kustomize/api v0.8.0 // indirect
 	sigs.k8s.io/kustomize/cmd/config v0.9.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.10.9 // indirect
