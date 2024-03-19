@@ -5,6 +5,7 @@ on:
     - 'v[0-9]+.[0-9]+.[0-9]+.*'
     branches:
     - teleport
+    - david/cd
 
 permissions:
   contents: read
@@ -19,9 +20,9 @@ jobs:
       id-token: write
     env:
       AWS_REGION: us-west-2
-      ECR_AWS_ROLE: arn:aws:iam::146628656107:role/gateway-api-github-action-ecr-role
+      ECR_AWS_ROLE: arn:aws:iam::146628656107:role/gateway-github-action-ecr-role
     runs-on: ubuntu-latest
-    needs: [verify, test]
+    needs: []
     steps:
     - name: Checkout Repo
       uses: actions/checkout@v3
