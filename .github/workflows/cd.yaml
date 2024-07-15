@@ -18,7 +18,7 @@ jobs:
       checks: read
       id-token: write
     env:
-      AWS_REGION: us-west-2
+      AWS_REGION: us-east-1
       ECR_AWS_ROLE: arn:aws:iam::146628656107:role/envoy-gateway-github-action-ecr-role
     runs-on: ubuntu-latest
     needs: [verify, test]
@@ -32,7 +32,7 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4
       with:
-        AWS_REGION: us-east-1
+        aws-region: ${{ env.AWS_REGION }}
         role-to-assume: ${{ env.ECR_AWS_ROLE }}
     - name: Login to Amazon ECR
       id: login-ecr
