@@ -328,7 +328,6 @@ func (s *extProcServer) Process(srv envoy_service_proc_v3.ExternalProcessor_Proc
 					},
 				},
 			}
-
 			resp = &envoy_service_proc_v3.ProcessingResponse{
 				Response: &envoy_service_proc_v3.ProcessingResponse_ResponseHeaders{
 					ResponseHeaders: rhq,

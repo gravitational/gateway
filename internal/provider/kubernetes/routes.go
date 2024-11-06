@@ -196,6 +196,11 @@ func (r *gatewayAPIReconciler) processHTTPRoutes(ctx context.Context, gatewayNam
 	resourceMap *resourceMappings, resourceTree *resource.Resources,
 ) error {
 	httpRouteList := &gwapiv1.HTTPRouteList{}
+	if r.hrfCRDExists {
+		httpFilters, err := r.getHTTPRouteFilters(ctx)
+		if err != nil {
+			return err
+		}
 
 	extensionRefFilters, err := r.getExtensionRefFilters(ctx)
 	if err != nil {

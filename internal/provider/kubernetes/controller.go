@@ -1035,7 +1035,6 @@ func (r *gatewayAPIReconciler) processGateways(ctx context.Context, managedGC *g
 				return err
 			}
 		}
-
 		// Discard Status to reduce memory consumption in watchable
 		// It will be recomputed by the gateway-api layer
 		gtw.Status = gwapiv1.GatewayStatus{}
