@@ -662,7 +662,8 @@
                   ],
                   "address": {
                     "socketAddress": {
-                      "address": "0.0.0.0",
+                      "address": "::",
+                      "ipv4Compat": true,
                       "portValue": 10080
                     }
                   },
@@ -799,7 +800,8 @@
                   ],
                   "address": {
                     "socketAddress": {
-                      "address": "0.0.0.0",
+                      "address": "::",
+                      "ipv4Compat": true,
                       "portValue": 8080
                     }
                   },
@@ -950,7 +952,8 @@
                   ],
                   "address": {
                     "socketAddress": {
-                      "address": "0.0.0.0",
+                      "address": "::",
+                      "ipv4Compat": true,
                       "portValue": 1234
                     }
                   },
@@ -1061,7 +1064,8 @@
                   ],
                   "address": {
                     "socketAddress": {
-                      "address": "0.0.0.0",
+                      "address": "::",
+                      "ipv4Compat": true,
                       "portValue": 8443
                     }
                   },
@@ -1185,7 +1189,8 @@
                   ],
                   "address": {
                     "socketAddress": {
-                      "address": "0.0.0.0",
+                      "address": "::",
+                      "ipv4Compat": true,
                       "portValue": 1234,
                       "protocol": "UDP"
                     }

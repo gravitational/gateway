@@ -57,6 +57,7 @@ func (m MutatorFunc) Mutate(old client.Object) client.Object {
 type UpdateHandler struct {
 	log           logr.Logger
 	client        client.Client
+	sendUpdates   chan struct{}
 	updateChannel chan Update
 	wg            *sync.WaitGroup
 }
@@ -165,6 +166,8 @@ type Updater interface {
 
 // UpdateWriter takes status updates and sends these to the UpdateHandler via a channel.
 type UpdateWriter struct {
+	log           logr.Logger
+	enabled       <-chan struct{}
 	updateChannel chan<- Update
 	wg            *sync.WaitGroup
 }

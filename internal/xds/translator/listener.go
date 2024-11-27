@@ -210,6 +210,7 @@ func buildXdsTCPListener(
 					PortSpecifier: &corev3.SocketAddress_PortValue{
 						PortValue: port,
 					},
+					Ipv4Compat: true,
 				},
 			},
 		},
@@ -247,6 +248,7 @@ func buildXdsQuicListener(name, address string, port uint32, ipFamily *egv1a1.IP
 					PortSpecifier: &corev3.SocketAddress_PortValue{
 						PortValue: port,
 					},
+					Ipv4Compat: true,
 				},
 			},
 		},
@@ -902,6 +904,7 @@ func buildXdsUDPListener(clusterName string, udpListener *ir.UDPListener, access
 					PortSpecifier: &corev3.SocketAddress_PortValue{
 						PortValue: udpListener.Port,
 					},
+					Ipv4Compat: true,
 				},
 			},
 		},

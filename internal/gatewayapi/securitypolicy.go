@@ -429,7 +429,7 @@ func (t *Translator) translateSecurityPolicyForRoute(
 			if oidc, err = t.buildOIDC(
 				policy,
 				resources,
-				gtwCtx.envoyProxy); err != nil {
+				gtwCtx.envoyProxy); err != nil { // TODO zhaohuabing: Only the last EnvoyProxy is used
 				err = perr.WithMessage(err, "OIDC")
 				errs = errors.Join(errs, err)
 			}
