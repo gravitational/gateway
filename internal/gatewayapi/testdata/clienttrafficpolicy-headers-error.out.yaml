@@ -117,7 +117,7 @@ xdsIR:
       json:
       - path: /dev/stdout
     http:
-    - address: '::'
+    - address: 0.0.0.0
       headers:
         enableEnvoyHeaders: true
         preserveXRequestID: true

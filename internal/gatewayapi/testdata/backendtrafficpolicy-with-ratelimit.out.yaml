@@ -277,7 +277,7 @@ xdsIR:
       json:
       - path: /dev/stdout
     http:
-    - address: '::'
+    - address: 0.0.0.0
       hostnames:
       - '*'
       isHTTP2: true
@@ -330,7 +330,7 @@ xdsIR:
       json:
       - path: /dev/stdout
     http:
-    - address: '::'
+    - address: 0.0.0.0
       hostnames:
       - '*'
       isHTTP2: false

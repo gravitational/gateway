@@ -59,6 +59,6 @@ xdsIR:
       json:
       - path: /dev/stdout
     tcp:
-    - address: '::'
+    - address: 0.0.0.0
       name: envoy-gateway/gateway-1/tcp
       port: 10080

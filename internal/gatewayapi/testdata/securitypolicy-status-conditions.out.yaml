@@ -414,7 +414,7 @@ xdsIR:
       json:
       - path: /dev/stdout
     http:
-    - address: '::'
+    - address: 0.0.0.0
       hostnames:
       - '*'
       isHTTP2: false
@@ -454,7 +454,7 @@ xdsIR:
       json:
       - path: /dev/stdout
     http:
-    - address: '::'
+    - address: 0.0.0.0
       hostnames:
       - '*'
       isHTTP2: true
@@ -490,6 +490,6 @@ xdsIR:
               safeRegex: http://.*\.example\.com
             maxAge: 16m40s
     tcp:
-    - address: '::'
+    - address: 0.0.0.0
       name: envoy-gateway/gateway-2/tcp
       port: 10053

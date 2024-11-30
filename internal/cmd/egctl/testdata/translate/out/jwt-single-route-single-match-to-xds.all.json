@@ -488,8 +488,7 @@
                   ],
                   "address": {
                     "socketAddress": {
-                      "address": "::",
-                      "ipv4Compat": true,
+                      "address": "0.0.0.0",
                       "portValue": 10080
                     }
                   },
