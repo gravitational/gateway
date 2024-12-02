@@ -14,7 +14,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 )
 
 var (
@@ -216,6 +218,99 @@ func TestValidateEnvoyProxy(t *testing.T) {
 				},
 			},
 			expected: false,
+		},
+		{
+			name: "should invalid when patch type is empty",
+			obj: &EnvoyProxy{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "test",
+					Name:      "test",
+				},
+				Spec: EnvoyProxySpec{
+					Provider: &EnvoyProxyProvider{
+						Type: ProviderTypeKubernetes,
+						Kubernetes: &EnvoyProxyKubernetesProvider{
+							EnvoyDeployment: &KubernetesDeploymentSpec{
+								Patch: &KubernetesPatchSpec{
+									Value: v1.JSON{
+										Raw: []byte{},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: true,
+		}, {
+			name: "should invalid when patch object is empty",
+			obj: &EnvoyProxy{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "test",
+					Name:      "test",
+				},
+				Spec: EnvoyProxySpec{
+					Provider: &EnvoyProxyProvider{
+						Type: ProviderTypeKubernetes,
+						Kubernetes: &EnvoyProxyKubernetesProvider{
+							EnvoyDeployment: &KubernetesDeploymentSpec{
+								Patch: &KubernetesPatchSpec{
+									Type: ptr.To(StrategicMerge),
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: false,
+		}, {
+			name: "should valid when patch type and object are both not empty",
+			obj: &EnvoyProxy{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "test",
+					Name:      "test",
+				},
+				Spec: EnvoyProxySpec{
+					Provider: &EnvoyProxyProvider{
+						Type: ProviderTypeKubernetes,
+						Kubernetes: &EnvoyProxyKubernetesProvider{
+							EnvoyDeployment: &KubernetesDeploymentSpec{
+								Patch: &KubernetesPatchSpec{
+									Type: ptr.To(StrategicMerge),
+									Value: v1.JSON{
+										Raw: []byte("{}"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: true,
+		}, 
+		{
+			name: "should valid when patch type is empty and object is not empty",
+			obj: &EnvoyProxy{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "test",
+					Name:      "test",
+				},
+				Spec: EnvoyProxySpec{
+					Provider: &EnvoyProxyProvider{
+						Type: ProviderTypeKubernetes,
+						Kubernetes: &EnvoyProxyKubernetesProvider{
+							EnvoyDeployment: &KubernetesDeploymentSpec{
+								Patch: &KubernetesPatchSpec{
+									Value: v1.JSON{
+										Raw: []byte("{}"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: true,
 		},
 	}
 
