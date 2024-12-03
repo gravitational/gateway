@@ -18,9 +18,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"k8s.io/utils/ptr"
 
 	egcfgv1a1 "github.com/envoyproxy/gateway/api/config/v1alpha1"
 	"github.com/envoyproxy/gateway/internal/envoygateway"
@@ -363,7 +363,6 @@ func TestCreateOrUpdateProxyDeployment(t *testing.T) {
 			current: deploy,
 			want:    deploymentWithImage(deploy, "envoyproxy/envoy:v0.0.1-mergepatch"),
 		},
-
 	}
 
 	for _, tc := range testCases {

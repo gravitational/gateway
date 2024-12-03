@@ -5,7 +5,7 @@
 
 package v1alpha1
 
-import ( 
+import (
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
@@ -163,6 +163,7 @@ const (
 
 // MergeType defines the type of merge operation
 type MergeType string
+
 const (
 	// StrategicMerge indicates a strategic merge patch type
 	StrategicMerge MergeType = "StrategicMerge"

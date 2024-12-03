@@ -287,7 +287,7 @@ func TestValidateEnvoyProxy(t *testing.T) {
 				},
 			},
 			expected: true,
-		}, 
+		},
 		{
 			name: "should valid when patch type is empty and object is not empty",
 			obj: &EnvoyProxy{
