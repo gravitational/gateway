@@ -2,8 +2,6 @@ module local
 
 go 1.22.0
 
-toolchain go1.23.3
-
 require sigs.k8s.io/controller-tools v0.16.1
 
 require (
