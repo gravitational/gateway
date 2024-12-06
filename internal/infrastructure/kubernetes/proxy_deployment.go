@@ -98,13 +98,11 @@ func (i *Infra) expectedProxyDeployment(infra *ir.Infra) (*appsv1.Deployment, er
 	}
 
 	// apply merge patch to deployment
-	if merged, err := deploymentConfig.ApplyMergePatch(deployment); err == nil {
-		deployment = merged
-	} else {
+	merged, err := deploymentConfig.ApplyMergePatch(deployment)
+	if err != nil {
 		return nil, fmt.Errorf("failed to apply merge patch to deployment: %w", err)
 	}
-
-	return deployment, nil
+	return merged, nil
 }
 
 func expectedProxyContainers(infra *ir.Infra, deploymentConfig *egcfgv1a1.KubernetesDeploymentSpec) ([]corev1.Container, error) {
