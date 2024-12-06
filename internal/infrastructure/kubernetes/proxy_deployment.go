@@ -100,6 +100,8 @@ func (i *Infra) expectedProxyDeployment(infra *ir.Infra) (*appsv1.Deployment, er
 	// apply merge patch to deployment
 	if merged, err := deploymentConfig.ApplyMergePatch(deployment); err == nil {
 		deployment = merged
+	} else {
+		return nil, fmt.Errorf("failed to apply merge patch to deployment: %w", err)
 	}
 
 	return deployment, nil
