@@ -14,9 +14,11 @@ import (
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -324,6 +326,43 @@ func TestCreateOrUpdateProxyDeployment(t *testing.T) {
 			current: deploy,
 			want:    deploymentWithImage(deploy, "envoyproxy/envoy-dev:v1.2.3"),
 		},
+		{
+			name: "patch deployment image",
+			in: &ir.Infra{
+				Proxy: &ir.ProxyInfra{
+					Metadata: &ir.InfraMetadata{
+						Labels: map[string]string{
+							gatewayapi.OwningGatewayNamespaceLabel: "default",
+							gatewayapi.OwningGatewayNameLabel:      infra.Proxy.Name,
+						},
+					},
+					Config: &egcfgv1a1.EnvoyProxy{
+						Spec: egcfgv1a1.EnvoyProxySpec{
+							Provider: &egcfgv1a1.EnvoyProxyProvider{
+								Type: egcfgv1a1.ProviderTypeKubernetes,
+								Kubernetes: &egcfgv1a1.EnvoyProxyKubernetesProvider{
+									EnvoyDeployment: &egcfgv1a1.KubernetesDeploymentSpec{
+										Container: &egcfgv1a1.KubernetesContainerSpec{
+											Image: pointer.String("envoyproxy/envoy-dev:v1.2.3"),
+										},
+										Patch: &egcfgv1a1.KubernetesPatchSpec{
+											Type: ptr.To(egcfgv1a1.StrategicMerge),
+											Value: v1.JSON{
+												Raw: []byte("{\"spec\":{\"template\":{\"spec\":{\"containers\":[ {\"name\": \"envoy\", \"image\": \"envoyproxy/envoy:v0.0.1-mergepatch\"} ] }}}}"),
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					Name:      ir.DefaultProxyName,
+					Listeners: ir.NewProxyListeners(),
+				},
+			},
+			current: deploy,
+			want:    deploymentWithImage(deploy, "envoyproxy/envoy:v0.0.1-mergepatch"),
+		},
 	}
 
 	for _, tc := range testCases {
@@ -377,6 +416,133 @@ func TestDeleteProxyDeployment(t *testing.T) {
 
 			err = kube.deleteProxyDeployment(context.Background(), infra)
 			require.NoError(t, err)
+		})
+	}
+}
+
+func TestExpectedDeploymentVolumes(t *testing.T) {
+	type args struct {
+		pod     *egcfgv1a1.KubernetesPodSpec
+		volumes []corev1.Volume
+	}
+	tests := []struct {
+		name string
+		args args
+		want []corev1.Volume
+	}{
+		{
+			name: "TestExpectedDeploymentVolumes",
+			args: args{
+				pod: &egcfgv1a1.KubernetesPodSpec{
+					Volumes: []corev1.Volume{
+						{
+							Name: "certs",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: "override-cert",
+								},
+							},
+						},
+					},
+				},
+				volumes: []corev1.Volume{
+					{
+						Name: "certs",
+						VolumeSource: corev1.VolumeSource{
+							Secret: &corev1.SecretVolumeSource{
+								SecretName: "cert",
+							},
+						},
+					},
+					{
+						Name: "default-certs",
+						VolumeSource: corev1.VolumeSource{
+							Secret: &corev1.SecretVolumeSource{
+								SecretName: "default-cert",
+							},
+						},
+					},
+				},
+			},
+			want: []corev1.Volume{
+				{
+					Name: "certs",
+					VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							SecretName: "override-cert",
+						},
+					},
+				},
+				{
+					Name: "default-certs",
+					VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							SecretName: "default-cert",
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, ExpectedDeploymentVolumes(tt.args.pod, tt.args.volumes), "ExpectedDeploymentVolumes(%v, %v)", tt.args.pod, tt.args.volumes)
+		})
+	}
+}
+
+func TestExpectedContainerVolumeMounts(t *testing.T) {
+	type args struct {
+		container    *egcfgv1a1.KubernetesContainerSpec
+		volumeMounts []corev1.VolumeMount
+	}
+	tests := []struct {
+		name string
+		args args
+		want []corev1.VolumeMount
+	}{
+		{
+			name: "TestExpectedContainerVolumeMounts",
+			args: args{
+				container: &egcfgv1a1.KubernetesContainerSpec{
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							Name:      "certs",
+							MountPath: "/override-certs",
+							ReadOnly:  true,
+						},
+					},
+				},
+				volumeMounts: []corev1.VolumeMount{
+					{
+						Name:      "certs",
+						MountPath: "/certs",
+						ReadOnly:  true,
+					},
+					{
+						Name:      "default-certs",
+						MountPath: "/default-certs",
+						ReadOnly:  true,
+					},
+				},
+			},
+			want: []corev1.VolumeMount{
+				{
+					Name:      "certs",
+					MountPath: "/override-certs",
+					ReadOnly:  true,
+				},
+				{
+					Name:      "default-certs",
+					MountPath: "/default-certs",
+					ReadOnly:  true,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, ExpectedContainerVolumeMounts(tt.args.container, tt.args.volumeMounts), "ExpectedContainerVolumeMounts(%v, %v)", tt.args.container, tt.args.volumeMounts)
 		})
 	}
 }

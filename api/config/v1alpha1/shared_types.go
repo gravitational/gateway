@@ -5,7 +5,10 @@
 
 package v1alpha1
 
-import corev1 "k8s.io/api/core/v1"
+import (
+	corev1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+)
 
 const (
 	// DefaultDeploymentReplicas is the default number of deployment replicas.
@@ -44,6 +47,11 @@ const (
 
 // KubernetesDeploymentSpec defines the desired state of the Kubernetes deployment resource.
 type KubernetesDeploymentSpec struct {
+	// Patch defines how to perform the patch operation to deployment
+	//
+	// +optional
+	Patch *KubernetesPatchSpec `json:"patch,omitempty"`
+
 	// Replicas is the number of desired pods. Defaults to 1.
 	//
 	// +optional
@@ -83,6 +91,12 @@ type KubernetesPodSpec struct {
 	// If specified, the pod's tolerations.
 	// +optional
 	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
+
+	// Volumes that can be mounted by containers belonging to the pod.
+	// More info: https://kubernetes.io/docs/concepts/storage/volumes
+	//
+	// +optional
+	Volumes []corev1.Volume `json:"volumes,omitempty"`
 }
 
 // KubernetesContainerSpec defines the desired state of the Kubernetes container resource.
@@ -104,6 +118,12 @@ type KubernetesContainerSpec struct {
 	//
 	// +optional
 	Image *string `json:"image,omitempty"`
+
+	// VolumeMounts are volumes to mount into the container's filesystem.
+	// Cannot be updated.
+	//
+	// +optional
+	VolumeMounts []corev1.VolumeMount `json:"volumeMounts,omitempty"`
 }
 
 // ServiceType string describes ingress methods for a service
@@ -152,3 +172,24 @@ const (
 	XDSHTTPListener XDSTranslatorHook = "HTTPListener"
 	XDSTranslation  XDSTranslatorHook = "Translation"
 )
+
+// MergeType defines the type of merge operation
+type MergeType string
+
+const (
+	// StrategicMerge indicates a strategic merge patch type
+	StrategicMerge MergeType = "StrategicMerge"
+	// JSONMerge indicates a JSON merge patch type
+	JSONMerge MergeType = "JSONMerge"
+)
+
+// KubernetesPatchSpec defines how to perform the patch operation
+type KubernetesPatchSpec struct {
+	// Type is the type of merge operation to perform
+	//
+	// By default, StrategicMerge is used as the patch type.
+	// +optional
+	Type *MergeType `json:"type,omitempty"`
+	// Object contains the raw configuration for merged object
+	Value apiextensionsv1.JSON `json:"value"`
+}

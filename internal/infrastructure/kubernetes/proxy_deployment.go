@@ -91,44 +91,18 @@ func (i *Infra) expectedProxyDeployment(infra *ir.Infra) (*appsv1.Deployment, er
 					SecurityContext:               deploymentConfig.Pod.SecurityContext,
 					Affinity:                      deploymentConfig.Pod.Affinity,
 					Tolerations:                   deploymentConfig.Pod.Tolerations,
-					Volumes: []corev1.Volume{
-						{
-							Name: "certs",
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: "envoy",
-								},
-							},
-						},
-						{
-							Name: "sds",
-							VolumeSource: corev1.VolumeSource{
-								ConfigMap: &corev1.ConfigMapVolumeSource{
-									LocalObjectReference: corev1.LocalObjectReference{
-										Name: expectedResourceHashedName(infra.Proxy.Name),
-									},
-									Items: []corev1.KeyToPath{
-										{
-											Key:  sdsCAFilename,
-											Path: sdsCAFilename,
-										},
-										{
-											Key:  sdsCertFilename,
-											Path: sdsCertFilename,
-										},
-									},
-									DefaultMode: pointer.Int32(int32(420)),
-									Optional:    pointer.Bool(false),
-								},
-							},
-						},
-					},
+					Volumes:                       expectedDeploymentVolumes(infra.Proxy.Name, deploymentConfig),
 				},
 			},
 		},
 	}
 
-	return deployment, nil
+	// apply merge patch to deployment
+	merged, err := deploymentConfig.ApplyMergePatch(deployment)
+	if err != nil {
+		return nil, fmt.Errorf("failed to apply merge patch to deployment: %w", err)
+	}
+	return merged, nil
 }
 
 func expectedProxyContainers(infra *ir.Infra, deploymentConfig *egcfgv1a1.KubernetesDeploymentSpec) ([]corev1.Container, error) {
@@ -205,26 +179,69 @@ func expectedProxyContainers(infra *ir.Infra, deploymentConfig *egcfgv1a1.Kubern
 					},
 				},
 			},
-			Resources:       *deploymentConfig.Container.Resources,
-			SecurityContext: deploymentConfig.Container.SecurityContext,
-			Ports:           ports,
-			VolumeMounts: []corev1.VolumeMount{
-				{
-					Name:      "certs",
-					MountPath: "/certs",
-					ReadOnly:  true,
-				},
-				{
-					Name:      "sds",
-					MountPath: "/sds",
-				},
-			},
+			Resources:                *deploymentConfig.Container.Resources,
+			SecurityContext:          deploymentConfig.Container.SecurityContext,
+			Ports:                    ports,
+			VolumeMounts:             expectedContainerVolumeMounts(deploymentConfig),
 			TerminationMessagePolicy: corev1.TerminationMessageReadFile,
 			TerminationMessagePath:   "/dev/termination-log",
 		},
 	}
 
 	return containers, nil
+}
+
+// expectedContainerVolumeMounts returns expected proxy container volume mounts.
+func expectedContainerVolumeMounts(deploymentSpec *egcfgv1a1.KubernetesDeploymentSpec) []corev1.VolumeMount {
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:      "certs",
+			MountPath: "/certs",
+			ReadOnly:  true,
+		},
+		{
+			Name:      "sds",
+			MountPath: "/sds",
+		},
+	}
+	return ExpectedContainerVolumeMounts(deploymentSpec.Container, volumeMounts)
+}
+
+// expectedDeploymentVolumes returns expected proxy deployment volumes.
+func expectedDeploymentVolumes(name string, deploymentSpec *egcfgv1a1.KubernetesDeploymentSpec) []corev1.Volume {
+	volumes := []corev1.Volume{
+		{
+			Name: "certs",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: "envoy",
+				},
+			},
+		},
+		{
+			Name: "sds",
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: expectedResourceHashedName(name),
+					},
+					Items: []corev1.KeyToPath{
+						{
+							Key:  sdsCAFilename,
+							Path: sdsCAFilename,
+						},
+						{
+							Key:  sdsCertFilename,
+							Path: sdsCertFilename,
+						},
+					},
+					DefaultMode: pointer.Int32(int32(420)),
+					Optional:    pointer.Bool(false),
+				},
+			},
+		},
+	}
+	return ExpectedDeploymentVolumes(deploymentSpec.Pod, volumes)
 }
 
 // createOrUpdateProxyDeployment creates a Deployment in the kube api server based on the provided
@@ -247,4 +264,38 @@ func (i *Infra) deleteProxyDeployment(ctx context.Context, infra *ir.Infra) erro
 	}
 
 	return i.deleteDeployment(ctx, deploy)
+}
+
+// ExpectedDeploymentVolumes returns expected deployment volumes.
+func ExpectedDeploymentVolumes(pod *egcfgv1a1.KubernetesPodSpec, volumes []corev1.Volume) []corev1.Volume {
+	amendFunc := func(volume corev1.Volume) {
+		for index, e := range volumes {
+			if e.Name == volume.Name {
+				volumes[index] = volume
+				return
+			}
+		}
+		volumes = append(volumes, volume)
+	}
+	for _, envVar := range pod.Volumes {
+		amendFunc(envVar)
+	}
+	return volumes
+}
+
+// ExpectedContainerVolumeMounts returns expected container volume mounts.
+func ExpectedContainerVolumeMounts(container *egcfgv1a1.KubernetesContainerSpec, volumeMounts []corev1.VolumeMount) []corev1.VolumeMount {
+	amendFunc := func(volumeMount corev1.VolumeMount) {
+		for index, e := range volumeMounts {
+			if e.Name == volumeMount.Name {
+				volumeMounts[index] = volumeMount
+				return
+			}
+		}
+		volumeMounts = append(volumeMounts, volumeMount)
+	}
+	for _, volumeMount := range container.VolumeMounts {
+		amendFunc(volumeMount)
+	}
+	return volumeMounts
 }
