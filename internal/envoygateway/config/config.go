@@ -7,6 +7,7 @@ package config
 
 import (
 	"errors"
+	"sync"
 
 	egv1a1 "github.com/envoyproxy/gateway/api/v1alpha1"
 	"github.com/envoyproxy/gateway/api/v1alpha1/validation"
@@ -42,7 +43,7 @@ type Server struct {
 
 // New returns a Server with default parameters.
 func New() (*Server, error) {
-	return &Server{
+	server := &Server{
 		EnvoyGateway: egv1a1.DefaultEnvoyGateway(),
 		Namespace:    env.Lookup("ENVOY_GATEWAY_NAMESPACE", DefaultNamespace),
 		DNSDomain:    env.Lookup("KUBERNETES_CLUSTER_DOMAIN", DefaultDNSDomain),

@@ -338,7 +338,6 @@ func (t *Translator) translateBackendTrafficPolicyForRoute(
 		err = perr.WithMessage(err, "Retry")
 		errs = errors.Join(errs, err)
 	}
-
 	if to, err = buildClusterSettingsTimeout(policy.Spec.ClusterSettings); err != nil {
 		err = perr.WithMessage(err, "Timeout")
 		errs = errors.Join(errs, err)
@@ -492,7 +491,6 @@ func (t *Translator) translateBackendTrafficPolicyForGateway(
 		err = perr.WithMessage(err, "Retry")
 		errs = errors.Join(errs, err)
 	}
-
 	if ct, err = buildClusterSettingsTimeout(policy.Spec.ClusterSettings); err != nil {
 		err = perr.WithMessage(err, "Timeout")
 		errs = errors.Join(errs, err)
