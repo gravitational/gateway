@@ -62,6 +62,8 @@ tlsRoutes:
     creationTimestamp: null
     name: tlsroute-1
     namespace: default
+    annotations:
+      "cloud.teleport.dev/protos": "proto1,proto2"
   spec:
     hostnames:
     - foo.com
@@ -146,6 +148,9 @@ xdsIR:
           inspector:
             snis:
             - foo.com
+            protos:
+            - "proto1"
+            - "proto2"
       - destination:
           name: tlsroute/default/tlsroute-2/rule/-1
           settings:
