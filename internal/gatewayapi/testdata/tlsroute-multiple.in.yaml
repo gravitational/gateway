@@ -21,6 +21,8 @@ tlsRoutes:
   metadata:
     namespace: default
     name: tlsroute-1
+    annotations:
+      "cloud.teleport.dev/protos": "proto1,proto2"
   spec:
     parentRefs:
     - namespace: envoy-gateway
