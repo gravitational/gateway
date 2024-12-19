@@ -59,6 +59,8 @@ tlsRoutes:
 - apiVersion: gateway.networking.k8s.io/v1alpha2
   kind: TLSRoute
   metadata:
+    annotations:
+      cloud.teleport.dev/protos: proto1,proto2
     creationTimestamp: null
     name: tlsroute-1
     namespace: default
@@ -144,6 +146,9 @@ xdsIR:
         name: tlsroute/default/tlsroute-1
         tls:
           inspector:
+            protos:
+            - proto1
+            - proto2
             snis:
             - foo.com
       - destination:
