@@ -18,6 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [verify, test]
     steps:
+    - name: Install btrfs headers
+      run: sudo apt-get install libbtrfs-dev -y
     - name: Checkout Repo
       uses: actions/checkout@v3
       with:
@@ -33,6 +35,8 @@ jobs:
     name: Verify
     runs-on: ubuntu-latest
     steps:
+    - name: Install btrfs headers
+      run: sudo apt-get install libbtrfs-dev -y
     - name: Checkout Repo
       uses: actions/checkout@v3
     - name: Setup Go
@@ -47,6 +51,8 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
+    - name: Install btrfs headers
+      run: sudo apt-get install libbtrfs-dev -y
     - name: Checkout Repo
       uses: actions/checkout@v3
     - name: Setup Go
