@@ -35,6 +35,8 @@ const (
 	HTTPRequestTimeout = "15s"
 	// egPrefix is a prefix of annotation keys that are processed by Envoy Gateway
 	egPrefix = "gateway.envoyproxy.io/"
+	// AnnotationTLSRouteProtos specifies the ALPN protos matched by a TLSRoute.
+	AnnotationTLSRouteProtos = "cloud.teleport.dev/protos"
 )
 
 var (
@@ -992,6 +994,11 @@ func (t *Translator) processTLSRouteParentRefs(tlsRoute *TLSRouteContext, resour
 			continue
 		}
 
+		var protos []string
+		if v := tlsRoute.Annotations[AnnotationTLSRouteProtos]; v != "" {
+			protos = strings.Split(v, ",")
+		}
+
 		var hasHostnameIntersection bool
 		for _, listener := range parentRef.listeners {
 			hosts := computeHosts(GetHostnames(tlsRoute), listener)
@@ -1009,7 +1016,8 @@ func (t *Translator) processTLSRouteParentRefs(tlsRoute *TLSRouteContext, resour
 				irRoute := &ir.TCPRoute{
 					Name: irTCPRouteName(tlsRoute),
 					TLS: &ir.TLS{TLSInspectorConfig: &ir.TLSInspectorConfig{
-						SNIs: hosts,
+						SNIs:   hosts,
+						Protos: protos,
 					}},
 					Destination: &ir.RouteDestination{
 						Name:     destName,
