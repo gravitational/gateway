@@ -695,9 +695,10 @@ func buildBackandConnectionBufferLimitBytes(bc *ir.BackendConnection) *wrappers.
 }
 
 type ExtraArgs struct {
-	metrics       *ir.Metrics
-	http1Settings *ir.HTTP1Settings
-	http2Settings *ir.HTTP2Settings
+	metrics        *ir.Metrics
+	http1Settings  *ir.HTTP1Settings
+	http2Settings  *ir.HTTP2Settings
+	circuitBreaker *ir.CircuitBreaker
 }
 
 type clusterArgs interface {
@@ -710,12 +711,13 @@ type UDPRouteTranslator struct {
 
 func (route *UDPRouteTranslator) asClusterArgs(extra *ExtraArgs) *xdsClusterArgs {
 	return &xdsClusterArgs{
-		name:         route.Destination.Name,
-		settings:     route.Destination.Settings,
-		loadBalancer: route.LoadBalancer,
-		endpointType: buildEndpointType(route.Destination.Settings),
-		metrics:      extra.metrics,
-		dns:          route.DNS,
+		name:           route.Destination.Name,
+		settings:       route.Destination.Settings,
+		loadBalancer:   route.LoadBalancer,
+		endpointType:   buildEndpointType(route.Destination.Settings),
+		metrics:        extra.metrics,
+		dns:            route.DNS,
+		circuitBreaker: extra.circuitBreaker,
 	}
 }
 

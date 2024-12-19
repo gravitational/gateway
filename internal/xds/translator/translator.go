@@ -598,7 +598,7 @@ func (t *Translator) processTCPListenerXdsTranslation(
 		patchProxyProtocolFilter(xdsListener, tcpListener.EnableProxyProtocol)
 
 		for _, route := range tcpListener.Routes {
-			if err := processXdsCluster(tCtx, &TCPRouteTranslator{route}, &ExtraArgs{metrics: metrics}); err != nil {
+			if err := processXdsCluster(tCtx, &TCPRouteTranslator{route}, &ExtraArgs{metrics: metrics, circuitBreaker: route.CircuitBreaker}); err != nil {
 				errs = errors.Join(errs, err)
 			}
 			if route.TLS != nil && route.TLS.Terminate != nil {
