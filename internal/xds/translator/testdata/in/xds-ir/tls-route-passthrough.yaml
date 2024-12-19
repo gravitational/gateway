@@ -8,6 +8,8 @@ tcp:
       inspector:
         snis:
         - foo.com
+        protos:
+        - customproto
     destination:
       name: "tls-passthrough-foo-dest"
       settings:

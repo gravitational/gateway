@@ -1720,6 +1720,12 @@ type TLSInspectorConfig struct {
 	// Wildcard hosts are supported in the prefix form. Partial wildcards are not
 	// supported, and values like *w.example.com are invalid.
 	SNIs []string `json:"snis,omitempty" yaml:"snis,omitempty"`
+	// Protos specifies application protocols that are compared against the
+	// ALPN protocols of a new connection.
+	// Wildcard protocols are supported in the prefix form.
+	// Partial wildcards are not supported.
+	// Protos are used only in case of TLS Passthrough.
+	Protos []string `json:"protos,omitempty" yaml:"protos,omitempty"`
 }
 
 func (t TLSInspectorConfig) Validate() error {
