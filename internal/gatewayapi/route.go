@@ -43,6 +43,10 @@ const (
 	// AnnotationUpstreamMaxConnections specifies the max upstream connections for a given
 	// route. Currently only TLSRoutes support this annotation. The value must be a valid uint32.
 	AnnotationUpstreamMaxConnections = "cloud.teleport.dev/upstream-max-connections"
+	// AnnotationGatewayDownstreamProxyProtocol enables proxy protocol for a gateways listeners.
+	// Currently this only applies to TCP listeners. The value is expected to be set to "true",
+	// case-insensitive, to enable proxy protocol. All other values will be ignored.
+	AnnotationGatewayDownstreamProxyProtocol = "cloud.teleport.dev/downstream-proxy-protocol"
 )
 
 var (
@@ -906,6 +910,11 @@ func (t *Translator) processTLSRouteParentRefs(tlsRoute *TLSRouteContext, resour
 
 				irRoute.ProxyProtocol = teleportGetProxyProtocol(tlsRoute)
 				irRoute.CircuitBreaker = teleportGetCircuitBreaker(tlsRoute)
+
+				annotations := listener.gateway.GetAnnotations()
+				if v := annotations[AnnotationGatewayDownstreamProxyProtocol]; strings.ToLower(v) == "true" {
+					irListener.EnableProxyProtocol = true
+				}
 
 				irListener.Routes = append(irListener.Routes, irRoute)
 
