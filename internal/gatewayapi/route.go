@@ -36,6 +36,13 @@ const (
 	egPrefix = "gateway.envoyproxy.io/"
 	// AnnotationTLSRouteProtos specifies the ALPN protos matched by a TLSRoute.
 	AnnotationTLSRouteProtos = "cloud.teleport.dev/protos"
+	// AnnotationUpstreamProxyProtocol enables proxy protocol for a given route. Currently
+	// only TLSRoutes support this annotation. The value is expected to be set to "true",
+	// case-insensitive, to enable proxy protocol. All other values will be ignored.
+	AnnotationUpstreamProxyProtocol = "cloud.teleport.dev/upstream-proxy-protocol"
+	// AnnotationUpstreamMaxConnections specifies the max upstream connections for a given
+	// route. Currently only TLSRoutes support this annotation. The value must be a valid uint32.
+	AnnotationUpstreamMaxConnections = "cloud.teleport.dev/upstream-max-connections"
 )
 
 var (
@@ -799,6 +806,31 @@ func (t *Translator) ProcessTLSRoutes(tlsRoutes []*gwapiv1a2.TLSRoute, gateways 
 	return relevantTLSRoutes
 }
 
+func teleportGetProxyProtocol(route *TLSRouteContext) *ir.ProxyProtocol {
+	annotations := route.GetAnnotations()
+	if v := annotations[AnnotationUpstreamProxyProtocol]; strings.ToLower(v) == "true" {
+		return ptr.To(ir.ProxyProtocol{
+			Version: ir.ProxyProtocolVersionV2,
+		})
+	}
+	return nil
+}
+
+func teleportGetCircuitBreaker(route *TLSRouteContext) *ir.CircuitBreaker {
+	annotations := route.GetAnnotations()
+
+	if v := annotations[AnnotationUpstreamMaxConnections]; v != "" {
+		uInt, err := strconv.ParseUint(v, 10, 32)
+		if err == nil {
+			return ptr.To(ir.CircuitBreaker{
+				MaxConnections:     ptr.To(uint32(uInt)),
+				MaxPendingRequests: ptr.To(uint32(uInt)),
+			})
+		}
+	}
+	return nil
+}
+
 func (t *Translator) processTLSRouteParentRefs(tlsRoute *TLSRouteContext, resources *resource.Resources, xdsIR resource.XdsIRMap) {
 	for _, parentRef := range tlsRoute.ParentRefs {
 
@@ -871,6 +903,10 @@ func (t *Translator) processTLSRouteParentRefs(tlsRoute *TLSRouteContext, resour
 						Settings: destSettings,
 					},
 				}
+
+				irRoute.ProxyProtocol = teleportGetProxyProtocol(tlsRoute)
+				irRoute.CircuitBreaker = teleportGetCircuitBreaker(tlsRoute)
+
 				irListener.Routes = append(irListener.Routes, irRoute)
 
 			}
