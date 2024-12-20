@@ -698,7 +698,6 @@ type ExtraArgs struct {
 	metrics        *ir.Metrics
 	http1Settings  *ir.HTTP1Settings
 	http2Settings  *ir.HTTP2Settings
-	circuitBreaker *ir.CircuitBreaker
 }
 
 type clusterArgs interface {
@@ -717,7 +716,6 @@ func (route *UDPRouteTranslator) asClusterArgs(extra *ExtraArgs) *xdsClusterArgs
 		endpointType:   buildEndpointType(route.Destination.Settings),
 		metrics:        extra.metrics,
 		dns:            route.DNS,
-		circuitBreaker: extra.circuitBreaker,
 	}
 }
 
