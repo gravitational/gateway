@@ -1,0 +1,37 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "eg.fullname" . }}-admission
+  labels:
+    name: {{ include "eg.fullname" . }}-webhook
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  namespace: '{{ .Release.Namespace }}'
+spec:
+  template:
+    metadata:
+      name: {{ include "eg.fullname" . }}-admission-create
+      labels:
+        name: {{ include "eg.fullname" . }}-webhook
+    spec:
+      containers:
+        - name: create
+          image: registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.1.1
+          imagePullPolicy: IfNotPresent
+          args:
+            - create
+            - --host={{ include "eg.fullname" . }}-admission-server,{{ include "eg.fullname" . }}-admission-server.gateway-system.svc
+            - --namespace=gateway-system
+            - --secret-name={{ include "eg.fullname" . }}-admission
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+      restartPolicy: OnFailure
+      serviceAccountName: {{ include "eg.fullname" . }}-admission
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 2000
