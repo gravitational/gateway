@@ -895,7 +895,7 @@ func (t *Translator) processTLSRouteParentRefs(tlsRoute *TLSRouteContext, resour
 				irRoute := &ir.TCPRoute{
 					Name: irTCPRouteName(tlsRoute),
 					TLS: &ir.TLS{TLSInspectorConfig: &ir.TLSInspectorConfig{
-						SNIs:   hosts,
+						SNIs: hosts,
 						Protos: protos,
 					}},
 					Destination: &ir.RouteDestination{
