@@ -823,7 +823,7 @@ func teleportGetCircuitBreaker(route *TLSRouteContext) *ir.CircuitBreaker {
 		uInt, err := strconv.ParseUint(v, 10, 32)
 		if err == nil {
 			return ptr.To(ir.CircuitBreaker{
-				MaxConnections: ptr.To(uint32(uInt)),
+				MaxConnections:     ptr.To(uint32(uInt)),
 				MaxPendingRequests: ptr.To(uint32(uInt)),
 			})
 		}
