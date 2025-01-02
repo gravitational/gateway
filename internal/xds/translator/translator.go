@@ -369,12 +369,7 @@ func findXdsCluster(tCtx *types.ResourceVersionTable, name string) *clusterv3.Cl
 func addXdsCluster(tCtx *types.ResourceVersionTable, args addXdsClusterArgs) {
 	xdsCluster := buildXdsCluster(args.name, args.tSocket, args.protocol, args.endpoint, args.circuitBreakers)
 	xdsEndpoints := buildXdsClusterLoadAssignment(args.name, args.destinations)
-	// Use EDS for static endpoints
-	if args.endpoint == Static {
-		tCtx.AddXdsResource(resourcev3.EndpointType, xdsEndpoints)
-	} else {
-		xdsCluster.LoadAssignment = xdsEndpoints
-	}
+	xdsCluster.LoadAssignment = xdsEndpoints
 	tCtx.AddXdsResource(resourcev3.ClusterType, xdsCluster)
 }
 
