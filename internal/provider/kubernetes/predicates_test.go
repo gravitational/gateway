@@ -554,7 +554,7 @@ func TestValidateEndpointSliceForReconcile(t *testing.T) {
 			expect:        false,
 		},
 		{
-			name: "http route service routes exist",
+			name: "http route service routes exist with endpoint routing",
 			configs: []client.Object{
 				sampleGatewayClass,
 				sampleGateway,
@@ -618,6 +618,17 @@ func TestValidateEndpointSliceForReconcile(t *testing.T) {
 			},
 			endpointSlice: test.GetEndpointSlice(types.NamespacedName{Name: "endpointslice"}, "mirror-service", false),
 			expect:        true,
+		},
+		{
+			name: "http route service routes exist with service routing",
+			configs: []client.Object{
+				test.GetGatewayClass("test-gc", egv1a1.GatewayControllerName, epRef),
+				epWithServiceRouting,
+				sampleGateway,
+				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", types.NamespacedName{Name: "service"}, 80, ""),
+			},
+			endpointSlice: test.GetEndpointSlice(types.NamespacedName{Name: "endpointslice"}, "service"),
+			expect:        false,
 		},
 	}
 
