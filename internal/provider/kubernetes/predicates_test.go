@@ -523,8 +523,20 @@ func TestValidateSecretForReconcile(t *testing.T) {
 // TestValidateEndpointSliceForReconcile tests the validateEndpointSliceForReconcile
 // predicate function.
 func TestValidateEndpointSliceForReconcile(t *testing.T) {
-	sampleGatewayClass := test.GetGatewayClass("test-gc", egv1a1.GatewayControllerName, nil)
-	sampleGateway := test.GetGateway(types.NamespacedName{Namespace: "default", Name: "scheduled-status-test"}, "test-gc", 8080)
+	ep := test.GetEnvoyProxy(types.NamespacedName{Name: "test-ep"}, false)
+	epWithServiceRouting := ep.DeepCopy()
+	routing := egv1a1.ServiceRoutingType
+	epWithServiceRouting.Spec.RoutingType = &routing
+
+	epRef := &test.GroupKindNamespacedName{
+		Group:     gwapiv1.Group(ep.GroupVersionKind().Group),
+		Kind:      gwapiv1.Kind(ep.GroupVersionKind().Kind),
+		Namespace: gwapiv1.Namespace(ep.Namespace),
+		Name:      gwapiv1.ObjectName(ep.Name),
+	}
+
+	sampleGatewayClass := test.GetGatewayClass("test-gc", egv1a1.GatewayControllerName, epRef)
+	sampleGateway := test.GetGateway(types.NamespacedName{Name: "scheduled-status-test"}, "test-gc", 8080)
 	sampleServiceBackendRef := test.GetServiceBackendRef(types.NamespacedName{Name: "service"}, 80)
 	sampleServiceImportBackendRef := test.GetServiceImportBackendRef(types.NamespacedName{Name: "imported-service"}, 80)
 
@@ -538,6 +550,7 @@ func TestValidateEndpointSliceForReconcile(t *testing.T) {
 			name: "route service but no routes exist",
 			configs: []client.Object{
 				sampleGatewayClass,
+				ep,
 				sampleGateway,
 			},
 			endpointSlice: test.GetEndpointSlice(types.NamespacedName{Name: "endpointslice"}, "service", false),
@@ -547,6 +560,7 @@ func TestValidateEndpointSliceForReconcile(t *testing.T) {
 			name: "http route service routes exist, but endpointslice is associated with another service",
 			configs: []client.Object{
 				sampleGatewayClass,
+				ep,
 				sampleGateway,
 				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", sampleServiceBackendRef, ""),
 			},
@@ -554,10 +568,11 @@ func TestValidateEndpointSliceForReconcile(t *testing.T) {
 			expect:        false,
 		},
 		{
-			name: "http route service routes exist",
+			name: "http route service routes exist with endpoint routing",
 			configs: []client.Object{
 				sampleGatewayClass,
 				sampleGateway,
+				ep,
 				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", sampleServiceBackendRef, ""),
 			},
 			endpointSlice: test.GetEndpointSlice(types.NamespacedName{Name: "endpointslice"}, "service", false),
@@ -568,6 +583,7 @@ func TestValidateEndpointSliceForReconcile(t *testing.T) {
 			configs: []client.Object{
 				sampleGatewayClass,
 				sampleGateway,
+				ep,
 				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", sampleServiceImportBackendRef, ""),
 			},
 			endpointSlice: test.GetEndpointSlice(types.NamespacedName{Name: "endpointslice"}, "imported-service", true),
@@ -576,7 +592,8 @@ func TestValidateEndpointSliceForReconcile(t *testing.T) {
 		{
 			name: "mirrored backend route exists",
 			configs: []client.Object{
-				test.GetGatewayClass("test-gc", egv1a1.GatewayControllerName, nil),
+				test.GetGatewayClass("test-gc", egv1a1.GatewayControllerName, epRef),
+				ep,
 				sampleGateway,
 				&gwapiv1.HTTPRoute{
 					ObjectMeta: metav1.ObjectMeta{
@@ -618,6 +635,17 @@ func TestValidateEndpointSliceForReconcile(t *testing.T) {
 			},
 			endpointSlice: test.GetEndpointSlice(types.NamespacedName{Name: "endpointslice"}, "mirror-service", false),
 			expect:        true,
+		},
+		{
+			name: "http route service routes exist with service routing",
+			configs: []client.Object{
+				test.GetGatewayClass("test-gc", egv1a1.GatewayControllerName, epRef),
+				epWithServiceRouting,
+				sampleGateway,
+				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", sampleServiceBackendRef, ""),
+			},
+			endpointSlice: test.GetEndpointSlice(types.NamespacedName{Name: "endpointslice"}, "service", false),
+			expect:        false,
 		},
 	}
 
