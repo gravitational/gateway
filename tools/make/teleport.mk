@@ -3,7 +3,8 @@
 
 TAG ?= $(shell git describe --tags --dirty --always)
 RELEASE_VERSION ?= ${TAG}
-CHART_VERSION ?= ${RELEASE_VERSION}
+# strip the leading "v" for helm chart version since semver is strictly enforced by `helm package`
+CHART_VERSION ?= $(subst v1.,1.,$(RELEASE_VERSION))
 
 REGISTRY ?= public.ecr.aws/gravitational
 IMAGE_NAME ?= envoy-gateway
