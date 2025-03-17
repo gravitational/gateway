@@ -1793,7 +1793,8 @@ func (r *gatewayAPIReconciler) watchResources(ctx context.Context, mgr manager.M
 	return nil
 }
 
-func (r *gatewayAPIReconciler) enqueueClass(_ context.Context, _ client.Object) []reconcile.Request {
+func (r *gatewayAPIReconciler) enqueueClass(_ context.Context, o client.Object) []reconcile.Request {
+	r.log.Info("enqueueClass executed", "objectName", o.GetName(), "objectNamespace", o.GetNamespace(), "objectKind", o.GetObjectKind().GroupVersionKind().Kind)
 	return []reconcile.Request{{NamespacedName: types.NamespacedName{
 		Name: string(r.classController),
 	}}}
