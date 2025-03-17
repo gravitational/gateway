@@ -280,23 +280,16 @@ func (r *gatewayAPIReconciler) isOIDCHMACSecret(nsName *types.NamespacedName) bo
 	return *nsName == oidcHMACSecret
 }
 
-// validateServiceForReconcile tries finding the owning Gateway of the Service
-// if it exists, finds the Gateway's Deployment, and further updates the Gateway
-// status Ready condition. All Services are pushed for reconciliation.
-func (r *gatewayAPIReconciler) validateServiceForReconcile(obj client.Object) bool {
+// validateServiceOwnedByGateway returns true if the Service belongs to a Gateway.
+func (r *gatewayAPIReconciler) validateServiceOwnedByGateway(svc *corev1.Service) bool {
 	ctx := context.Background()
-	svc, ok := obj.(*corev1.Service)
-	if !ok {
-		r.log.Info("unexpected object type, bypassing reconciliation", "object", obj)
-		return false
-	}
 	labels := svc.GetLabels()
 
 	// Check if the Service belongs to a Gateway, if so, update the Gateway status.
 	gtw := r.findOwningGateway(ctx, labels)
 	if gtw != nil {
 		r.updateGatewayStatus(gtw)
-		return false
+		return true
 	}
 
 	// Merged gateways will have only this label, update status of all Gateways under found GatewayClass.
@@ -304,8 +297,54 @@ func (r *gatewayAPIReconciler) validateServiceForReconcile(obj client.Object) bo
 	if ok && r.mergeGateways.Has(gcName) {
 		if err := r.updateStatusForGatewaysUnderGatewayClass(ctx, gcName); err != nil {
 			r.log.Info("no Gateways found under GatewayClass", "name", gcName)
+			return true
+		}
+		return true
+	}
+
+	return false
+}
+
+// validateServiceUpdateForReconcile checks whether a Service update should trigger a reconcile.
+// Returns false when the backend does not have endpoint routing and the service of type clusterIP
+// does not have a new IP address.
+func (r *gatewayAPIReconciler) validateServiceUpdateForReconcile(oldObj client.Object, newObj client.Object) bool {
+	oldSvc, ok := oldObj.(*corev1.Service)
+	if !ok {
+		r.log.Info("unexpected object type, bypassing reconciliation", "object", oldObj)
+		return false
+	}
+	newSvc, ok := newObj.(*corev1.Service)
+	if !ok {
+		r.log.Info("unexpected object type, bypassing reconciliation", "object", newObj)
+		return false
+	}
+
+	if r.validateServiceOwnedByGateway(newSvc) {
+		return false
+	}
+
+	nsName := utils.NamespacedName(newSvc)
+	if !r.hasRouteWithEndpointRouting(&nsName) {
+		if (newSvc.Spec.Type != corev1.ServiceTypeClusterIP) || (oldSvc.Spec.Type != corev1.ServiceTypeClusterIP) || (newSvc.Spec.ClusterIP != oldSvc.Spec.ClusterIP) {
 			return false
 		}
+	}
+
+	return true
+}
+
+// validateServiceForReconcile tries finding the owning Gateway of the Service
+// if it exists, finds the Gateway's Deployment, and further updates the Gateway
+// status Ready condition. All Services are pushed for reconciliation.
+func (r *gatewayAPIReconciler) validateServiceForReconcile(obj client.Object) bool {
+	svc, ok := obj.(*corev1.Service)
+	if !ok {
+		r.log.Info("unexpected object type, bypassing reconciliation", "object", obj)
+		return false
+	}
+
+	if r.validateServiceOwnedByGateway(svc) {
 		return false
 	}
 
