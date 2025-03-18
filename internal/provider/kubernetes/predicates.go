@@ -280,13 +280,13 @@ func (r *gatewayAPIReconciler) isOIDCHMACSecret(nsName *types.NamespacedName) bo
 	return *nsName == oidcHMACSecret
 }
 
-// isServiceOwnedByGateway returns true if the Service belongs to a Gateway.
-func (r *gatewayAPIReconciler) isServiceOwnedByGateway(svc *corev1.Service) bool {
+// validateServiceOwnedByGateway returns true if the Service belongs to a Gateway.
+func (r *gatewayAPIReconciler) validateServiceOwnedByGateway(svc *corev1.Service) bool {
 	ctx := context.Background()
 	labels := svc.GetLabels()
 
 	// Check if the Service belongs to a Gateway, if so, update the Gateway status.
-	gtw := r.findOwningGateway(context.Background(), labels)
+	gtw := r.findOwningGateway(ctx, labels)
 	if gtw != nil {
 		r.updateGatewayStatus(gtw)
 		return true
@@ -306,32 +306,29 @@ func (r *gatewayAPIReconciler) isServiceOwnedByGateway(svc *corev1.Service) bool
 }
 
 // validateServiceUpdateForReconcile checks whether a Service update should trigger a reconcile.
-// Returns false when the backend does not have endpoint routing and the service of type clusterIP 
+// Returns false when the backend does not have endpoint routing and the service of type clusterIP
 // does not have a new IP address.
 func (r *gatewayAPIReconciler) validateServiceUpdateForReconcile(oldObj client.Object, newObj client.Object) bool {
 	oldSvc, ok := oldObj.(*corev1.Service)
 	if !ok {
 		r.log.Info("unexpected object type, bypassing reconciliation", "object", oldObj)
-		return true
+		return false
 	}
 	newSvc, ok := newObj.(*corev1.Service)
 	if !ok {
 		r.log.Info("unexpected object type, bypassing reconciliation", "object", newObj)
-		return true
+		return false
 	}
 
-	if r.isServiceOwnedByGateway(newSvc) {
-		return true
-	}
-
-	if (newSvc.Spec.Type != corev1.ServiceTypeClusterIP) || (oldSvc.Spec.Type != corev1.ServiceTypeClusterIP) || (newSvc.Spec.ClusterIP != oldSvc.Spec.ClusterIP) {
-		return true
+	if r.validateServiceOwnedByGateway(newSvc) {
+		return false
 	}
 
 	nsName := utils.NamespacedName(newSvc)
 	if !r.hasRouteWithEndpointRouting(&nsName) {
-		r.log.Info("validateServiceUpdateForReconcile -- Service is not referenced by backend with endpoint routing", "service", nsName)
-		return false
+		if (newSvc.Spec.Type != corev1.ServiceTypeClusterIP) || (oldSvc.Spec.Type != corev1.ServiceTypeClusterIP) || (newSvc.Spec.ClusterIP != oldSvc.Spec.ClusterIP) {
+			return false
+		}
 	}
 
 	return true
@@ -347,13 +344,12 @@ func (r *gatewayAPIReconciler) validateServiceForReconcile(obj client.Object) bo
 		return false
 	}
 
-	if r.isServiceOwnedByGateway(svc) {
+	if r.validateServiceOwnedByGateway(svc) {
 		return false
 	}
 
 	nsName := utils.NamespacedName(svc)
 	if r.isRouteReferencingBackend(&nsName) {
-		r.log.Info("validateServiceForReconcile -- Service is referenced by a Route", "service", nsName)
 		return true
 	}
 
@@ -477,9 +473,7 @@ func (r *gatewayAPIReconciler) isRouteReferencingBackend(nsName *types.Namespace
 			return false
 		}
 		if len(tlsRouteList.Items) > 0 {
-			// we don't know the old value of the service clusterIP here, so we can't avoid reconciling on service change.
 			return true
-
 		}
 	}
 

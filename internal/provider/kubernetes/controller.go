@@ -8,7 +8,6 @@ package kubernetes
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -1358,40 +1357,30 @@ func (r *gatewayAPIReconciler) watchResources(ctx context.Context, mgr manager.M
 		}
 	}
 
-// // create service predicate with additonal logic for update events
-	servicePredicateFuncs := predicate.TypedFuncs[*corev1.Service]{
-			CreateFunc: func(e event.TypedCreateEvent[*corev1.Service]) bool {
-				return true
-			},
-			UpdateFunc: func(e event.TypedUpdateEvent[*corev1.Service]) bool {
-				retVal := r.validateServiceUpdateForReconcile(e.ObjectOld, e.ObjectNew)
-				if strings.HasPrefix(e.ObjectOld.Name, "brendan") {
-					r.log.Info(fmt.Sprintf("predicate -- validateServiceUpdateForReconcile=%v",retVal), "name", e.ObjectOld.Name)
-				}
-				return retVal
-	
-			},
-			DeleteFunc: func(e event.TypedDeleteEvent[*corev1.Service]) bool {
-				return true
-			},
-			GenericFunc: func(e event.TypedGenericEvent[*corev1.Service]) bool {
-				return true
-			},
-		}
-	
+	// composable predicate functions - service updates do not require a reconcile when the
+	// service is not referenced by any endpoint-routed backend and ClusterIP is unchanged.
+	skipServiceUpdatesWithoutEndpointRouting := predicate.TypedFuncs[*corev1.Service]{
+		CreateFunc: func(e event.TypedCreateEvent[*corev1.Service]) bool {
+			return true
+		},
+		UpdateFunc: func(e event.TypedUpdateEvent[*corev1.Service]) bool {
+			return r.validateServiceUpdateForReconcile(e.ObjectOld, e.ObjectNew)
+		},
+		DeleteFunc: func(e event.TypedDeleteEvent[*corev1.Service]) bool {
+			return true
+		},
+		GenericFunc: func(e event.TypedGenericEvent[*corev1.Service]) bool {
+			return true
+		},
+	}
 
 	// Watch Service CRUDs and process affected *Route objects.
 	servicePredicates := []predicate.TypedPredicate[*corev1.Service]{predicate.And[*corev1.Service](
-		servicePredicateFuncs,
+		skipServiceUpdatesWithoutEndpointRouting,
 		predicate.NewTypedPredicateFuncs[*corev1.Service](func(svc *corev1.Service) bool {
-			validateService := r.validateServiceForReconcile(svc)
-			if strings.HasPrefix(svc.Namespace, "dev-blue-cloud-teleportinfra-dev") {
-				r.log.Info(fmt.Sprintf("predicate -- validateServiceForReconcile=%v",validateService), "namespace", svc.Namespace, "name", svc.Name)
-			}
-			return validateService
+			return r.validateServiceForReconcile(svc)
 		}),
-	),}
-
+	)}
 	if r.namespaceLabel != nil {
 		servicePredicates = append(servicePredicates, predicate.NewTypedPredicateFuncs[*corev1.Service](func(svc *corev1.Service) bool {
 			return r.hasMatchingNamespaceLabels(svc)
@@ -1828,7 +1817,6 @@ func (r *gatewayAPIReconciler) watchResources(ctx context.Context, mgr manager.M
 }
 
 func (r *gatewayAPIReconciler) enqueueClass(_ context.Context, o client.Object) []reconcile.Request {
-	r.log.Info("enqueueClass executed", "objectName", o.GetName(), "objectNamespace", o.GetNamespace(), "objectKind", o.GetObjectKind().GroupVersionKind().Kind)
 	return []reconcile.Request{{NamespacedName: types.NamespacedName{
 		Name: string(r.classController),
 	}}}
