@@ -24,6 +24,8 @@ import (
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -403,7 +405,8 @@ func (r *gatewayAPIReconciler) processBackendRefs(ctx context.Context, gwcResour
 		switch backendRefKind {
 		case resource.KindService:
 			service := new(corev1.Service)
-			err := r.client.Get(ctx, types.NamespacedName{Namespace: string(*backendRef.Namespace), Name: string(backendRef.Name)}, service)
+			nsName := types.NamespacedName{Namespace: string(*backendRef.Namespace), Name: string(backendRef.Name)}
+			err := r.client.Get(ctx, nsName, service)
 			if err != nil {
 				r.log.Error(err, "failed to get Service", "namespace", string(*backendRef.Namespace),
 					"name", string(backendRef.Name))
@@ -413,7 +416,9 @@ func (r *gatewayAPIReconciler) processBackendRefs(ctx context.Context, gwcResour
 				r.log.Info("added Service to resource tree", "namespace", string(*backendRef.Namespace),
 					"name", string(backendRef.Name))
 			}
-			endpointSliceLabelKey = discoveryv1.LabelServiceName
+			if r.hasRouteWithEndpointRouting(&nsName) {
+				endpointSliceLabelKey = discoveryv1.LabelServiceName
+			}
 
 		case resource.KindServiceImport:
 			serviceImport := new(mcsapiv1a1.ServiceImport)
@@ -1352,12 +1357,30 @@ func (r *gatewayAPIReconciler) watchResources(ctx context.Context, mgr manager.M
 		}
 	}
 
+	// composable predicate functions - service updates do not require a reconcile when the
+	// service is not referenced by any endpoint-routed backend and ClusterIP is unchanged.
+	skipServiceUpdatesWithoutEndpointRouting := predicate.TypedFuncs[*corev1.Service]{
+		CreateFunc: func(e event.TypedCreateEvent[*corev1.Service]) bool {
+			return true
+		},
+		UpdateFunc: func(e event.TypedUpdateEvent[*corev1.Service]) bool {
+			return r.validateServiceUpdateForReconcile(e.ObjectOld, e.ObjectNew)
+		},
+		DeleteFunc: func(e event.TypedDeleteEvent[*corev1.Service]) bool {
+			return true
+		},
+		GenericFunc: func(e event.TypedGenericEvent[*corev1.Service]) bool {
+			return true
+		},
+	}
+
 	// Watch Service CRUDs and process affected *Route objects.
-	servicePredicates := []predicate.TypedPredicate[*corev1.Service]{
+	servicePredicates := []predicate.TypedPredicate[*corev1.Service]{predicate.And[*corev1.Service](
+		skipServiceUpdatesWithoutEndpointRouting,
 		predicate.NewTypedPredicateFuncs[*corev1.Service](func(svc *corev1.Service) bool {
 			return r.validateServiceForReconcile(svc)
 		}),
-	}
+	)}
 	if r.namespaceLabel != nil {
 		servicePredicates = append(servicePredicates, predicate.NewTypedPredicateFuncs[*corev1.Service](func(svc *corev1.Service) bool {
 			return r.hasMatchingNamespaceLabels(svc)
@@ -1793,7 +1816,7 @@ func (r *gatewayAPIReconciler) watchResources(ctx context.Context, mgr manager.M
 	return nil
 }
 
-func (r *gatewayAPIReconciler) enqueueClass(_ context.Context, _ client.Object) []reconcile.Request {
+func (r *gatewayAPIReconciler) enqueueClass(_ context.Context, o client.Object) []reconcile.Request {
 	return []reconcile.Request{{NamespacedName: types.NamespacedName{
 		Name: string(r.classController),
 	}}}
