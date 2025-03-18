@@ -24,6 +24,7 @@ import (
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+//	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -1352,12 +1353,34 @@ func (r *gatewayAPIReconciler) watchResources(ctx context.Context, mgr manager.M
 		}
 	}
 
+// // create service predicate with additonal logic for update events
+// 	servicePredicateFuncs := func (filter func(*corev1.Service) bool) predicate.TypedFuncs[*corev1.Service] {
+// 		return TypedFuncs[*corev1.Service]{
+// 			CreateFunc: func(e event.TypedCreateEvent[*corev1.Service]) bool {
+// 				return filter(e.Object)
+// 			},
+// 			UpdateFunc: func(e event.TypedUpdateEvent[*corev1.Service]) bool {
+// 				return filter(e.ObjectNew)
+// 			},
+// 			DeleteFunc: func(e event.TypedDeleteEvent[*corev1.Service]) bool {
+// 				return filter(e.Object)
+// 			},
+// 			GenericFunc: func(e event.TypedGenericEvent[*corev1.Service]) bool {
+// 				return filter(e.Object)
+// 			},
+// 		}
+// 	}
+
+
 	// Watch Service CRUDs and process affected *Route objects.
 	servicePredicates := []predicate.TypedPredicate[*corev1.Service]{
 		predicate.NewTypedPredicateFuncs[*corev1.Service](func(svc *corev1.Service) bool {
-			return r.validateServiceForReconcile(svc)
+			retVal := r.validateServiceForReconcile(svc)
+			r.log.Info(fmt.Sprintf("predicate -- validateServiceForReconcile=%v",retVal), "namespace", svc.Namespace, "name", svc.Name)
+			return retVal
 		}),
 	}
+
 	if r.namespaceLabel != nil {
 		servicePredicates = append(servicePredicates, predicate.NewTypedPredicateFuncs[*corev1.Service](func(svc *corev1.Service) bool {
 			return r.hasMatchingNamespaceLabels(svc)

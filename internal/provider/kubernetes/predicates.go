@@ -311,6 +311,7 @@ func (r *gatewayAPIReconciler) validateServiceForReconcile(obj client.Object) bo
 
 	nsName := utils.NamespacedName(svc)
 	if r.isRouteReferencingBackend(&nsName) {
+		r.log.Info("validateServiceForReconcile -- Service is referenced by a Route", "service", nsName)
 		return true
 	}
 
@@ -434,6 +435,7 @@ func (r *gatewayAPIReconciler) isRouteReferencingBackend(nsName *types.Namespace
 			return false
 		}
 		if len(tlsRouteList.Items) > 0 {
+			// we don't know the old value of the service clusterIP here, so we can't avoid reconciling on service change.
 			return true
 		}
 	}
