@@ -281,27 +281,23 @@ func (r *gatewayAPIReconciler) isOIDCHMACSecret(nsName *types.NamespacedName) bo
 }
 
 // isServiceOwnedByGateway returns true if the Service belongs to a Gateway.
-func (r *gatewayAPIReconciler) isServiceOwnedByGateway(svc *corev1.Service, updateStatus bool) bool {
+func (r *gatewayAPIReconciler) isServiceOwnedByGateway(svc *corev1.Service) bool {
 	ctx := context.Background()
 	labels := svc.GetLabels()
 
 	// Check if the Service belongs to a Gateway, if so, update the Gateway status.
 	gtw := r.findOwningGateway(context.Background(), labels)
 	if gtw != nil {
-		if updateStatus {
-			r.updateGatewayStatus(gtw)
-		}
+		r.updateGatewayStatus(gtw)
 		return true
 	}
 
 	// Merged gateways will have only this label, update status of all Gateways under found GatewayClass.
 	gcName, ok := labels[gatewayapi.OwningGatewayClassLabel]
 	if ok && r.mergeGateways.Has(gcName) {
-		if updateStatus {
-			if err := r.updateStatusForGatewaysUnderGatewayClass(ctx, gcName); err != nil {
-				r.log.Info("no Gateways found under GatewayClass", "name", gcName)
-				return true
-			}
+		if err := r.updateStatusForGatewaysUnderGatewayClass(ctx, gcName); err != nil {
+			r.log.Info("no Gateways found under GatewayClass", "name", gcName)
+			return true
 		}
 		return true
 	}
@@ -324,7 +320,7 @@ func (r *gatewayAPIReconciler) validateServiceUpdateForReconcile(oldObj client.O
 		return true
 	}
 
-	if r.isServiceOwnedByGateway(newSvc, false) {
+	if r.isServiceOwnedByGateway(newSvc) {
 		return true
 	}
 
@@ -351,7 +347,7 @@ func (r *gatewayAPIReconciler) validateServiceForReconcile(obj client.Object) bo
 		return false
 	}
 
-	if r.isServiceOwnedByGateway(svc, true) {
+	if r.isServiceOwnedByGateway(svc) {
 		return false
 	}
 

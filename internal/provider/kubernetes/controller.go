@@ -406,7 +406,8 @@ func (r *gatewayAPIReconciler) processBackendRefs(ctx context.Context, gwcResour
 		switch backendRefKind {
 		case resource.KindService:
 			service := new(corev1.Service)
-			err := r.client.Get(ctx, types.NamespacedName{Namespace: string(*backendRef.Namespace), Name: string(backendRef.Name)}, service)
+			nsName := types.NamespacedName{Namespace: string(*backendRef.Namespace), Name: string(backendRef.Name)}
+			err := r.client.Get(ctx, nsName, service)
 			if err != nil {
 				r.log.Error(err, "failed to get Service", "namespace", string(*backendRef.Namespace),
 					"name", string(backendRef.Name))
@@ -416,7 +417,9 @@ func (r *gatewayAPIReconciler) processBackendRefs(ctx context.Context, gwcResour
 				r.log.Info("added Service to resource tree", "namespace", string(*backendRef.Namespace),
 					"name", string(backendRef.Name))
 			}
-			endpointSliceLabelKey = discoveryv1.LabelServiceName
+			if r.hasRouteWithEndpointRouting(&nsName) {
+				endpointSliceLabelKey = discoveryv1.LabelServiceName
+			}
 
 		case resource.KindServiceImport:
 			serviceImport := new(mcsapiv1a1.ServiceImport)
@@ -1388,17 +1391,6 @@ func (r *gatewayAPIReconciler) watchResources(ctx context.Context, mgr manager.M
 			return validateService
 		}),
 	),}
-
-
-	// servicePredicates := []predicate.TypedPredicate[*corev1.Service]{
-	// 	predicate.NewTypedPredicateFuncs[*corev1.Service](func(svc *corev1.Service) bool {
-	// 		retVal := r.validateServiceForReconcile(svc)
-	// 		if strings.HasPrefix(svc.Namespace, "dev-blue-cloud-teleportinfra-dev") {
-	// 			r.log.Info(fmt.Sprintf("predicate -- validateServiceForReconcile=%v",retVal), "namespace", svc.Namespace, "name", svc.Name)
-	// 		}
-	// 		return retVal
-	// 	}),
-	// }
 
 	if r.namespaceLabel != nil {
 		servicePredicates = append(servicePredicates, predicate.NewTypedPredicateFuncs[*corev1.Service](func(svc *corev1.Service) bool {
