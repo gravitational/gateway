@@ -24,7 +24,6 @@ import (
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -1360,17 +1359,8 @@ func (r *gatewayAPIReconciler) watchResources(ctx context.Context, mgr manager.M
 	// composable predicate functions - service updates do not require a reconcile when the
 	// service is not referenced by any endpoint-routed backend and ClusterIP is unchanged.
 	skipServiceUpdatesWithoutEndpointRouting := predicate.TypedFuncs[*corev1.Service]{
-		CreateFunc: func(e event.TypedCreateEvent[*corev1.Service]) bool {
-			return true
-		},
 		UpdateFunc: func(e event.TypedUpdateEvent[*corev1.Service]) bool {
 			return r.validateServiceUpdateForReconcile(e.ObjectOld, e.ObjectNew)
-		},
-		DeleteFunc: func(e event.TypedDeleteEvent[*corev1.Service]) bool {
-			return true
-		},
-		GenericFunc: func(e event.TypedGenericEvent[*corev1.Service]) bool {
-			return true
 		},
 	}
 
@@ -1816,7 +1806,7 @@ func (r *gatewayAPIReconciler) watchResources(ctx context.Context, mgr manager.M
 	return nil
 }
 
-func (r *gatewayAPIReconciler) enqueueClass(_ context.Context, o client.Object) []reconcile.Request {
+func (r *gatewayAPIReconciler) enqueueClass(_ context.Context, _ client.Object) []reconcile.Request {
 	return []reconcile.Request{{NamespacedName: types.NamespacedName{
 		Name: string(r.classController),
 	}}}
