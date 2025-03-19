@@ -1354,7 +1354,6 @@ func TestServiceHasRouteWithEndpointRouting(t *testing.T) {
 			require.Equal(t, tc.expect, res)
 		})
 	}
-
 }
 
 func TestValidateServiceUpdateForReconcile(t *testing.T) {
@@ -1528,5 +1527,4 @@ func TestValidateServiceUpdateForReconcile(t *testing.T) {
 			require.Equal(t, tc.expect, res)
 		})
 	}
-
 }
