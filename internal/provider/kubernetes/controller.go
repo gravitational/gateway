@@ -29,6 +29,7 @@ import (
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -646,7 +647,9 @@ func (r *gatewayAPIReconciler) processBackendRefs(ctx context.Context, gwcResour
 					logger.Info("added Service to resource tree")
 				}
 			}
-			endpointSliceLabelKey = discoveryv1.LabelServiceName
+			if r.hasRouteWithEndpointRouting(&nn) {
+				endpointSliceLabelKey = discoveryv1.LabelServiceName
+			}
 
 		case resource.KindServiceImport:
 			serviceImport := new(mcsapiv1a1.ServiceImport)
@@ -1913,12 +1916,21 @@ func (r *gatewayAPIReconciler) watchResources(ctx context.Context, mgr manager.M
 		}
 	}
 
+	// composable predicate functions - service updates do not require a reconcile when the
+	// service is not referenced by any endpoint-routed backend and ClusterIP is unchanged.
+	skipServiceUpdatesWithoutEndpointRouting := predicate.TypedFuncs[*corev1.Service]{
+		UpdateFunc: func(e event.TypedUpdateEvent[*corev1.Service]) bool {
+			return r.validateServiceUpdateForReconcile(e.ObjectOld, e.ObjectNew)
+		},
+	}
+
 	// Watch Service CRUDs and process affected *Route objects.
-	servicePredicates := []predicate.TypedPredicate[*corev1.Service]{
-		predicate.NewTypedPredicateFuncs(func(svc *corev1.Service) bool {
+	servicePredicates := []predicate.TypedPredicate[*corev1.Service]{predicate.And[*corev1.Service](
+		skipServiceUpdatesWithoutEndpointRouting,
+		predicate.NewTypedPredicateFuncs[*corev1.Service](func(svc *corev1.Service) bool {
 			return r.validateServiceForReconcile(svc)
 		}),
-	}
+	)}
 	if r.namespaceLabel != nil {
 		servicePredicates = append(servicePredicates, predicate.NewTypedPredicateFuncs(func(svc *corev1.Service) bool {
 			return r.hasMatchingNamespaceLabels(svc)
