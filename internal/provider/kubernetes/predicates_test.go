@@ -1386,6 +1386,7 @@ func TestServiceHasRouteWithEndpointRouting(t *testing.T) {
 	}
 
 	service := test.GetService(types.NamespacedName{Name: "service"}, nil, nil)
+	sampleServiceBackendRef := test.GetServiceBackendRef(types.NamespacedName{Name: "service"}, 80)
 
 	testCases := []struct {
 		name    string
@@ -1409,7 +1410,7 @@ func TestServiceHasRouteWithEndpointRouting(t *testing.T) {
 				test.GetGatewayClass("test-gc", egv1a1.GatewayControllerName, epRef),
 				sampleGateway,
 				epWithServiceRouting,
-				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", types.NamespacedName{Name: "service"}, 80, ""),
+				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", sampleServiceBackendRef, ""),
 			},
 			service: service,
 			expect:  false,
@@ -1430,7 +1431,7 @@ func TestServiceHasRouteWithEndpointRouting(t *testing.T) {
 				test.GetGatewayClass("test-gc", egv1a1.GatewayControllerName, epRef),
 				sampleGateway,
 				ep,
-				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", types.NamespacedName{Name: "service"}, 80, ""),
+				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", sampleServiceBackendRef, ""),
 			},
 			service: service,
 			expect:  true,
@@ -1485,6 +1486,8 @@ func TestValidateServiceUpdateForReconcile(t *testing.T) {
 	oldNodePort := oldClusterIP.DeepCopy()
 	oldNodePort.Spec.Type = corev1.ServiceTypeNodePort
 
+	sampleServiceBackendRef := test.GetServiceBackendRef(types.NamespacedName{Name: "service"}, 80)
+
 	testCases := []struct {
 		name       string
 		configs    []client.Object
@@ -1509,7 +1512,7 @@ func TestValidateServiceUpdateForReconcile(t *testing.T) {
 				test.GetGatewayClass("test-gc", egv1a1.GatewayControllerName, epRef),
 				sampleGateway,
 				epWithServiceRouting,
-				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", types.NamespacedName{Name: "service"}, 80, ""),
+				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", sampleServiceBackendRef, ""),
 			},
 			serviceOld: oldClusterIP,
 			serviceNew: oldClusterIP,
@@ -1532,7 +1535,7 @@ func TestValidateServiceUpdateForReconcile(t *testing.T) {
 				test.GetGatewayClass("test-gc", egv1a1.GatewayControllerName, epRef),
 				sampleGateway,
 				epWithServiceRouting,
-				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", types.NamespacedName{Name: "service"}, 80, ""),
+				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", sampleServiceBackendRef, ""),
 			},
 			serviceOld: oldNodePort,
 			serviceNew: oldNodePort,
@@ -1544,7 +1547,7 @@ func TestValidateServiceUpdateForReconcile(t *testing.T) {
 				test.GetGatewayClass("test-gc", egv1a1.GatewayControllerName, epRef),
 				sampleGateway,
 				epWithServiceRouting,
-				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", types.NamespacedName{Name: "service"}, 80, ""),
+				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", sampleServiceBackendRef, ""),
 			},
 			serviceOld: oldClusterIP,
 			serviceNew: newClusterIPSelectorChange,
@@ -1556,7 +1559,7 @@ func TestValidateServiceUpdateForReconcile(t *testing.T) {
 				test.GetGatewayClass("test-gc", egv1a1.GatewayControllerName, epRef),
 				sampleGateway,
 				epWithServiceRouting,
-				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", types.NamespacedName{Name: "service"}, 80, ""),
+				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", sampleServiceBackendRef, ""),
 			},
 			serviceOld: oldClusterIP,
 			serviceNew: newClusterIPChange,
@@ -1579,7 +1582,7 @@ func TestValidateServiceUpdateForReconcile(t *testing.T) {
 				test.GetGatewayClass("test-gc", egv1a1.GatewayControllerName, epRef),
 				sampleGateway,
 				ep,
-				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", types.NamespacedName{Name: "service"}, 80, ""),
+				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", sampleServiceBackendRef, ""),
 			},
 			serviceOld: oldClusterIP,
 			serviceNew: oldClusterIP,
@@ -1591,7 +1594,7 @@ func TestValidateServiceUpdateForReconcile(t *testing.T) {
 				test.GetGatewayClass("test-gc", egv1a1.GatewayControllerName, epRef),
 				sampleGateway,
 				ep,
-				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", types.NamespacedName{Name: "service"}, 80, ""),
+				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", sampleServiceBackendRef, ""),
 			},
 			serviceOld: oldClusterIP,
 			serviceNew: newClusterIPSelectorChange,
@@ -1603,7 +1606,7 @@ func TestValidateServiceUpdateForReconcile(t *testing.T) {
 				test.GetGatewayClass("test-gc", egv1a1.GatewayControllerName, epRef),
 				sampleGateway,
 				ep,
-				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", types.NamespacedName{Name: "service"}, 80, ""),
+				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", sampleServiceBackendRef, ""),
 			},
 			serviceOld: oldClusterIP,
 			serviceNew: newClusterIPChange,
