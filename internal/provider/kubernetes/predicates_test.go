@@ -1496,6 +1496,7 @@ func TestServiceHasRouteWithEndpointRouting(t *testing.T) {
 	}
 
 	service := test.GetService(types.NamespacedName{Name: "service"}, nil, nil)
+	sampleServiceBackendRef := test.GetServiceBackendRef(types.NamespacedName{Name: "service"}, 80)
 
 	testCases := []struct {
 		name    string
@@ -1519,7 +1520,7 @@ func TestServiceHasRouteWithEndpointRouting(t *testing.T) {
 				test.GetGatewayClass("test-gc", egv1a1.GatewayControllerName, epRef),
 				sampleGateway,
 				epWithServiceRouting,
-				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", types.NamespacedName{Name: "service"}, 80, ""),
+				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", sampleServiceBackendRef, ""),
 			},
 			service: service,
 			expect:  false,
@@ -1540,7 +1541,7 @@ func TestServiceHasRouteWithEndpointRouting(t *testing.T) {
 				test.GetGatewayClass("test-gc", egv1a1.GatewayControllerName, epRef),
 				sampleGateway,
 				ep,
-				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", types.NamespacedName{Name: "service"}, 80, ""),
+				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", sampleServiceBackendRef, ""),
 			},
 			service: service,
 			expect:  true,
@@ -1548,7 +1549,7 @@ func TestServiceHasRouteWithEndpointRouting(t *testing.T) {
 	}
 
 	// Create the reconciler.
-	logger := logging.DefaultLogger(egv1a1.LogLevelInfo)
+	logger := logging.DefaultLogger(os.Stdout, egv1a1.LogLevelInfo)
 
 	r := gatewayAPIReconciler{
 		classController: egv1a1.GatewayControllerName,
@@ -1571,6 +1572,7 @@ func TestServiceHasRouteWithEndpointRouting(t *testing.T) {
 
 func TestValidateServiceUpdateForReconcile(t *testing.T) {
 	sampleGateway := test.GetGateway(types.NamespacedName{Name: "scheduled-status-test"}, "test-gc", 8080)
+	sampleServiceBackendRef := test.GetServiceBackendRef(types.NamespacedName{Name: "service"}, 80)
 
 	ep := test.GetEnvoyProxy(types.NamespacedName{Name: "test-ep"}, false)
 	epWithServiceRouting := ep.DeepCopy()
@@ -1619,7 +1621,7 @@ func TestValidateServiceUpdateForReconcile(t *testing.T) {
 				test.GetGatewayClass("test-gc", egv1a1.GatewayControllerName, epRef),
 				sampleGateway,
 				epWithServiceRouting,
-				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", types.NamespacedName{Name: "service"}, 80, ""),
+				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", sampleServiceBackendRef, ""),
 			},
 			serviceOld: oldClusterIP,
 			serviceNew: oldClusterIP,
@@ -1642,7 +1644,7 @@ func TestValidateServiceUpdateForReconcile(t *testing.T) {
 				test.GetGatewayClass("test-gc", egv1a1.GatewayControllerName, epRef),
 				sampleGateway,
 				epWithServiceRouting,
-				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", types.NamespacedName{Name: "service"}, 80, ""),
+				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", sampleServiceBackendRef, ""),
 			},
 			serviceOld: oldNodePort,
 			serviceNew: oldNodePort,
@@ -1654,7 +1656,7 @@ func TestValidateServiceUpdateForReconcile(t *testing.T) {
 				test.GetGatewayClass("test-gc", egv1a1.GatewayControllerName, epRef),
 				sampleGateway,
 				epWithServiceRouting,
-				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", types.NamespacedName{Name: "service"}, 80, ""),
+				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", sampleServiceBackendRef, ""),
 			},
 			serviceOld: oldClusterIP,
 			serviceNew: newClusterIPSelectorChange,
@@ -1666,7 +1668,7 @@ func TestValidateServiceUpdateForReconcile(t *testing.T) {
 				test.GetGatewayClass("test-gc", egv1a1.GatewayControllerName, epRef),
 				sampleGateway,
 				epWithServiceRouting,
-				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", types.NamespacedName{Name: "service"}, 80, ""),
+				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", sampleServiceBackendRef, ""),
 			},
 			serviceOld: oldClusterIP,
 			serviceNew: newClusterIPChange,
@@ -1689,7 +1691,7 @@ func TestValidateServiceUpdateForReconcile(t *testing.T) {
 				test.GetGatewayClass("test-gc", egv1a1.GatewayControllerName, epRef),
 				sampleGateway,
 				ep,
-				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", types.NamespacedName{Name: "service"}, 80, ""),
+				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", sampleServiceBackendRef, ""),
 			},
 			serviceOld: oldClusterIP,
 			serviceNew: oldClusterIP,
@@ -1701,7 +1703,7 @@ func TestValidateServiceUpdateForReconcile(t *testing.T) {
 				test.GetGatewayClass("test-gc", egv1a1.GatewayControllerName, epRef),
 				sampleGateway,
 				ep,
-				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", types.NamespacedName{Name: "service"}, 80, ""),
+				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", sampleServiceBackendRef, ""),
 			},
 			serviceOld: oldClusterIP,
 			serviceNew: newClusterIPSelectorChange,
@@ -1713,7 +1715,7 @@ func TestValidateServiceUpdateForReconcile(t *testing.T) {
 				test.GetGatewayClass("test-gc", egv1a1.GatewayControllerName, epRef),
 				sampleGateway,
 				ep,
-				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", types.NamespacedName{Name: "service"}, 80, ""),
+				test.GetHTTPRoute(types.NamespacedName{Name: "httproute-test"}, "scheduled-status-test", sampleServiceBackendRef, ""),
 			},
 			serviceOld: oldClusterIP,
 			serviceNew: newClusterIPChange,
@@ -1722,7 +1724,7 @@ func TestValidateServiceUpdateForReconcile(t *testing.T) {
 	}
 
 	// Create the reconciler.
-	logger := logging.DefaultLogger(egv1a1.LogLevelInfo)
+	logger := logging.DefaultLogger(os.Stdout, egv1a1.LogLevelInfo)
 
 	r := gatewayAPIReconciler{
 		classController: egv1a1.GatewayControllerName,
