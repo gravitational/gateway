@@ -306,7 +306,7 @@ func (r *gatewayAPIReconciler) isOIDCHMACSecret(nsName *types.NamespacedName) bo
 // validateServiceUpdateForReconcile checks whether a Service update should trigger a reconcile.
 // Returns false when the backend does not have endpoint routing and the service of type clusterIP
 // does not have a new IP address.
-func (r *gatewayAPIReconciler) validateServiceUpdateForReconcile(oldSvc *corev1.Service, newSvc *corev1.Service) bool {
+func (r *gatewayAPIReconciler) validateServiceUpdateForReconcile(oldSvc, newSvc *corev1.Service) bool {
 	ctx := context.Background()
 	labels := newSvc.GetLabels()
 	// Check if the Service belongs to a Gateway
