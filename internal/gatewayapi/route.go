@@ -1524,7 +1524,7 @@ func (t *Translator) processTLSRouteParentRefs(tlsRoute *TLSRouteContext, resour
 
 				annotations := listener.gateway.GetAnnotations()
 				if v := annotations[AnnotationGatewayDownstreamProxyProtocol]; strings.ToLower(v) == "true" {
-					irListener.EnableProxyProtocol = true
+					irListener.ProxyProtocol = &ir.ProxyProtocolSettings{}
 				}
 
 				irListener.Routes = append(irListener.Routes, irRoute)
