@@ -27,7 +27,7 @@ jobs:
     - name: Setup Docker Buildx
       uses: docker/setup-buildx-action@v2
     - name: Build gateway
-      run: PLATFORM="linux_amd64" make teleport-build
+      run: PLATFORMS="linux_amd64 linux_arm64" make teleport-build-multiarch
     - name: Build gateway helm
       run: CHART_VERSION=v0.0.0-latest TAG=latest make teleport-helm-package
 
