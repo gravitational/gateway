@@ -51,7 +51,7 @@ jobs:
     - name: Setup Docker Buildx
       uses: docker/setup-buildx-action@v2
     - name: Build and push gateway
-      run: PLATFORM="linux_amd64" make teleport-push
+      run: PLATFORMS="linux_amd64 linux_arm64" make teleport-push-multiarch
     - name: Build and push helm
       run: make teleport-helm-push
 
