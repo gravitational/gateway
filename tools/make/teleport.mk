@@ -34,6 +34,10 @@ teleport-push: teleport-build push
 .PHONY: teleport-build-multiarch
 teleport-build-multiarch: go.build.multiarch image-multiarch
 
+.PHONY: teleport-push-multiarch
+teleport-push-multiarch: ## Push the current build of envoy/gateway to teleport's registry.
+teleport-push-multiarch: teleport-build-multiarch push-multiarch
+
 teleport-helm-%: RELEASE_VERSION
 
 .PHONY: teleport-helm-package
