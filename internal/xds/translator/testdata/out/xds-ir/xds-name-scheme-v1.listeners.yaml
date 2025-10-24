@@ -30,7 +30,6 @@
         statPrefix: http-10080
         useRemoteAddress: true
     name: envoy-gateway/gateway-1/http1
-  maxConnectionsToAcceptPerSocketEvent: 1
   name: envoy-gateway/gateway-1/http1
   perConnectionBufferLimitBytes: 32768
 - address:
@@ -132,7 +131,6 @@
   - name: envoy.filters.listener.tls_inspector
     typedConfig:
       '@type': type.googleapis.com/envoy.extensions.filters.listener.tls_inspector.v3.TlsInspector
-  maxConnectionsToAcceptPerSocketEvent: 1
   name: envoy-gateway/gateway-1/https1
   perConnectionBufferLimitBytes: 32768
 - address:
@@ -243,7 +241,6 @@
             tlsMinimumProtocolVersion: TLSv1_2
         disableStatefulSessionResumption: true
         disableStatelessSessionResumption: true
-  maxConnectionsToAcceptPerSocketEvent: 1
   name: envoy-gateway/gateway-2/https-http3
   perConnectionBufferLimitBytes: 32768
 - address:
@@ -275,7 +272,6 @@
   - name: envoy.filters.listener.tls_inspector
     typedConfig:
       '@type': type.googleapis.com/envoy.extensions.filters.listener.tls_inspector.v3.TlsInspector
-  maxConnectionsToAcceptPerSocketEvent: 1
   name: envoy-gateway/gateway-1/tls
   perConnectionBufferLimitBytes: 32768
 - address:
@@ -290,7 +286,6 @@
         cluster: tcproute/default/tcproute
         statPrefix: tcp-10091
     name: tcproute/default/tcproute-1
-  maxConnectionsToAcceptPerSocketEvent: 1
   name: envoy-gateway/gateway-1/tcp
   perConnectionBufferLimitBytes: 32768
 - address:

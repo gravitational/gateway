@@ -4,20 +4,20 @@
       portValue: 10080
   filterChains:
   - filterChainMatch:
+      applicationProtocols:
+      - customproto
       serverNames:
       - foo.com
-      - bar.com
-      - example.com
     filters:
     - name: envoy.filters.network.tcp_proxy
       typedConfig:
         '@type': type.googleapis.com/envoy.extensions.filters.network.tcp_proxy.v3.TcpProxy
-        cluster: tcp-route-complex-dest
+        cluster: tlsroute-with-proxy-and-cb-dest
         statPrefix: tls-passthrough-10080
-    name: tcp-route-complex
+    name: tlsroute-with-proxy-and-cb
   listenerFilters:
   - name: envoy.filters.listener.tls_inspector
     typedConfig:
       '@type': type.googleapis.com/envoy.extensions.filters.listener.tls_inspector.v3.TlsInspector
-  name: tcp-listener-complex
+  name: tlsroute-with-proxy-and-cb
   perConnectionBufferLimitBytes: 32768
