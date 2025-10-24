@@ -59,6 +59,5 @@
         cluster: max-accept-default
         statPrefix: tcp-10082
     name: max-accept-default
-  maxConnectionsToAcceptPerSocketEvent: 1
   name: third-listener
   perConnectionBufferLimitBytes: 32768
