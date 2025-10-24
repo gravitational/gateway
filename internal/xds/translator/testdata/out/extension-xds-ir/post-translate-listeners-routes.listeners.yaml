@@ -30,7 +30,6 @@
         statPrefix: http-10080
         useRemoteAddress: true
     name: test-listener-modify
-  maxConnectionsToAcceptPerSocketEvent: 1
   name: test-listener-modify
   perConnectionBufferLimitBytes: 32768
   statPrefix: extension-modified-listener
@@ -66,7 +65,6 @@
         statPrefix: http-10081
         useRemoteAddress: true
     name: second-listener
-  maxConnectionsToAcceptPerSocketEvent: 1
   name: second-listener
   perConnectionBufferLimitBytes: 32768
 - name: extension-injected-listener
