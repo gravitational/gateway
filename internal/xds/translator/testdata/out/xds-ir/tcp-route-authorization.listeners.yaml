@@ -64,6 +64,5 @@
         cluster: tcp-route-authorization-dest
         statPrefix: tcp-10080
     name: tcp-route-authorization
-  maxConnectionsToAcceptPerSocketEvent: 1
   name: tcp-listener-authorization
   perConnectionBufferLimitBytes: 32768

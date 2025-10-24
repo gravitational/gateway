@@ -251,10 +251,7 @@ func buildPerConnectionBufferLimitBytes(connection *ir.ClientConnection) *wrappe
 }
 
 func buildMaxAcceptPerSocketEvent(connection *ir.ClientConnection) *wrapperspb.UInt32Value {
-	if connection == nil || connection.MaxAcceptPerSocketEvent == nil {
-		return wrapperspb.UInt32(defaultMaxAcceptConnectionsPerSocketEvent)
-	}
-	if *connection.MaxAcceptPerSocketEvent == 0 {
+	if connection == nil || connection.MaxAcceptPerSocketEvent == nil || *connection.MaxAcceptPerSocketEvent == 0 {
 		return nil
 	}
 	return wrapperspb.UInt32(*connection.MaxAcceptPerSocketEvent)
