@@ -35,6 +35,19 @@ const (
 	HTTPRequestTimeout = "15s"
 	// egPrefix is a prefix of annotation keys that are processed by Envoy Gateway
 	egPrefix = "gateway.envoyproxy.io/"
+	// AnnotationTLSRouteProtos specifies the ALPN protos matched by a TLSRoute.
+	AnnotationTLSRouteProtos = "cloud.teleport.dev/protos"
+	// AnnotationUpstreamProxyProtocol enables proxy protocol for a given route. Currently
+	// only TLSRoutes support this annotation. The value is expected to be set to "true",
+	// case-insensitive, to enable proxy protocol. All other values will be ignored.
+	AnnotationUpstreamProxyProtocol = "cloud.teleport.dev/upstream-proxy-protocol"
+	// AnnotationUpstreamMaxConnections specifies the max upstream connections for a given
+	// route. Currently only TLSRoutes support this annotation. The value must be a valid uint32.
+	AnnotationUpstreamMaxConnections = "cloud.teleport.dev/upstream-max-connections"
+	// AnnotationGatewayDownstreamProxyProtocol enables proxy protocol for a gateways listeners.
+	// Currently this only applies to TCP listeners. The value is expected to be set to "true",
+	// case-insensitive, to enable proxy protocol. All other values will be ignored.
+	AnnotationGatewayDownstreamProxyProtocol = "cloud.teleport.dev/downstream-proxy-protocol"
 )
 
 var (
@@ -958,6 +971,31 @@ func (t *Translator) ProcessTLSRoutes(tlsRoutes []*gwapiv1a2.TLSRoute, gateways 
 	return relevantTLSRoutes
 }
 
+func teleportGetProxyProtocol(route *TLSRouteContext) *ir.ProxyProtocol {
+	annotations := route.GetAnnotations()
+	if v := annotations[AnnotationUpstreamProxyProtocol]; strings.EqualFold(v, "true") {
+		return ptr.To(ir.ProxyProtocol{
+			Version: ir.ProxyProtocolVersionV2,
+		})
+	}
+	return nil
+}
+
+func teleportGetCircuitBreaker(route *TLSRouteContext) *ir.CircuitBreaker {
+	annotations := route.GetAnnotations()
+
+	if v := annotations[AnnotationUpstreamMaxConnections]; v != "" {
+		uInt, err := strconv.ParseUint(v, 10, 32)
+		if err == nil {
+			return ptr.To(ir.CircuitBreaker{
+				MaxConnections:     ptr.To(uint32(uInt)),
+				MaxPendingRequests: ptr.To(uint32(uInt)),
+			})
+		}
+	}
+	return nil
+}
+
 func (t *Translator) processTLSRouteParentRefs(tlsRoute *TLSRouteContext, resources *resource.Resources, xdsIR resource.XdsIRMap) {
 	for _, parentRef := range tlsRoute.ParentRefs {
 
@@ -1017,6 +1055,11 @@ func (t *Translator) processTLSRouteParentRefs(tlsRoute *TLSRouteContext, resour
 			continue
 		}
 
+		var protos []string
+		if v := tlsRoute.Annotations[AnnotationTLSRouteProtos]; v != "" {
+			protos = strings.Split(v, ",")
+		}
+
 		var hasHostnameIntersection bool
 		for _, listener := range parentRef.listeners {
 			hosts := computeHosts(GetHostnames(tlsRoute), listener)
@@ -1034,7 +1077,8 @@ func (t *Translator) processTLSRouteParentRefs(tlsRoute *TLSRouteContext, resour
 				irRoute := &ir.TCPRoute{
 					Name: irTCPRouteName(tlsRoute),
 					TLS: &ir.TLS{TLSInspectorConfig: &ir.TLSInspectorConfig{
-						SNIs: hosts,
+						SNIs:   hosts,
+						Protos: protos,
 					}},
 					Destination: &ir.RouteDestination{
 						Name:     destName,
@@ -1042,6 +1086,15 @@ func (t *Translator) processTLSRouteParentRefs(tlsRoute *TLSRouteContext, resour
 						Metadata: buildResourceMetadata(tlsRoute, nil),
 					},
 				}
+
+				irRoute.ProxyProtocol = teleportGetProxyProtocol(tlsRoute)
+				irRoute.CircuitBreaker = teleportGetCircuitBreaker(tlsRoute)
+
+				annotations := listener.gateway.GetAnnotations()
+				if v := annotations[AnnotationGatewayDownstreamProxyProtocol]; strings.EqualFold(v, "true") {
+					irListener.ProxyProtocol = &ir.ProxyProtocolSettings{}
+				}
+
 				irListener.Routes = append(irListener.Routes, irRoute)
 
 			}
