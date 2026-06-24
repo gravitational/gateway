@@ -4,7 +4,6 @@ gateways:
   metadata:
     annotations:
       cloud.teleport.dev/downstream-proxy-protocol: "true"
-    creationTimestamp: null
     name: gateway-1
     namespace: envoy-gateway
   spec:
@@ -65,7 +64,6 @@ tlsRoutes:
 - apiVersion: gateway.networking.k8s.io/v1alpha2
   kind: TLSRoute
   metadata:
-    creationTimestamp: null
     name: tlsroute-1
     namespace: default
   spec:
