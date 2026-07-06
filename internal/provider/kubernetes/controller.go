@@ -2541,18 +2541,21 @@ func (r *gatewayAPIReconciler) crdExists(mgr manager.Manager, kind, groupVersion
 	if err != nil {
 		r.log.Error(err, "failed to create discovery client")
 	}
-	apiResourceList, err := discoveryClient.ServerPreferredResources()
+	apiResourceList, err := discoveryClient.ServerResourcesForGroupVersion(groupVersion)
 	if err != nil {
+		if kerrors.IsNotFound(err) {
+			return false
+		}
+
 		r.log.Error(err, "failed to get API resource list")
+
+		return false
 	}
 	found := false
-	for _, list := range apiResourceList {
-		for i := range list.APIResources {
-			res := &list.APIResources[i]
-			if list.GroupVersion == groupVersion && res.Kind == kind {
-				found = true
-				break
-			}
+	for _, res := range apiResourceList.APIResources {
+		if res.Kind == kind {
+			found = true
+			break
 		}
 	}
 
