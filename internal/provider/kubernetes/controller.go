@@ -2552,7 +2552,8 @@ func (r *gatewayAPIReconciler) crdExists(mgr manager.Manager, kind, groupVersion
 		return false
 	}
 	found := false
-	for _, res := range apiResourceList.APIResources {
+	for i := range apiResourceList.APIResources {
+		res := &apiResourceList.APIResources[i]
 		if res.Kind == kind {
 			found = true
 			break
