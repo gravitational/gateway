@@ -46,7 +46,7 @@ teleport-helm-package: helm-package
 
 .PHONY: teleport-helm-push
 teleport-helm-push: ## Push envoy gateway helm chart to teleport's OCI registry.
-teleport-helm-push: teleport-helm-package helm-push
+teleport-helm-push: teleport-helm-package helm-push.gateway-helm
 
 .PHONY: teleport-dev-install
 teleport-dev-install: ## Install the local changes to gateway the regional kind cluster.
