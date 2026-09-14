@@ -2782,6 +2782,12 @@ type TLSInspectorConfig struct {
 	// Wildcard hosts are supported in the prefix form. Partial wildcards are not
 	// supported, and values like *w.example.com are invalid.
 	SNIs []string `json:"snis,omitempty" yaml:"snis,omitempty"`
+	// ALPNProtocols are compared against the ALPN protocols of a new connection, narrowing
+	// the route to connections that negotiate one of them. Only used for TLS passthrough,
+	// where the connection is matched without being terminated.
+	// Envoy compares these exactly, so unlike SNIs they support no wildcard form. A leading
+	// "*" instead means match any protocol, and drops the ALPN match entirely.
+	ALPNProtocols []string `json:"alpnProtocols,omitempty" yaml:"alpnProtocols,omitempty"`
 }
 
 func (t TLSInspectorConfig) Validate() error {

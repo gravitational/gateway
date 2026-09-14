@@ -1020,3 +1020,63 @@ func TestGetOrCreateBackendCluster(t *testing.T) {
 		require.Len(t, gwIR.BackendClusters, 1)
 	})
 }
+
+func TestALPNProtocolsForRoute(t *testing.T) {
+	tests := []struct {
+		name        string
+		annotations map[string]string
+		expected    []string
+	}{
+		{
+			name:        "no annotations at all",
+			annotations: nil,
+			expected:    nil,
+		},
+		{
+			name:        "unrelated annotation only",
+			annotations: map[string]string{"example.com/other": "h2"},
+			expected:    nil,
+		},
+		{
+			name:        "empty value",
+			annotations: map[string]string{AnnotationTLSRouteALPNProtocols: ""},
+			expected:    nil,
+		},
+		{
+			name:        "only separators",
+			annotations: map[string]string{AnnotationTLSRouteALPNProtocols: " , , "},
+			expected:    nil,
+		},
+		{
+			name:        "single protocol",
+			annotations: map[string]string{AnnotationTLSRouteALPNProtocols: "teleport-proxy-ssh"},
+			expected:    []string{"teleport-proxy-ssh"},
+		},
+		{
+			name:        "several protocols",
+			annotations: map[string]string{AnnotationTLSRouteALPNProtocols: "h2,http/1.1"},
+			expected:    []string{"h2", "http/1.1"},
+		},
+		{
+			name:        "padding and a trailing comma are tolerated",
+			annotations: map[string]string{AnnotationTLSRouteALPNProtocols: "  teleport-proxy-ssh ,  h2 ,"},
+			expected:    []string{"teleport-proxy-ssh", "h2"},
+		},
+		{
+			name:        "wildcard is passed through for the xds layer to drop",
+			annotations: map[string]string{AnnotationTLSRouteALPNProtocols: "*"},
+			expected:    []string{"*"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			route := &TLSRouteContext{
+				TLSRoute: &gwapiv1.TLSRoute{
+					ObjectMeta: metav1.ObjectMeta{Annotations: tt.annotations},
+				},
+			}
+			require.Equal(t, tt.expected, alpnProtocolsForRoute(route))
+		})
+	}
+}
