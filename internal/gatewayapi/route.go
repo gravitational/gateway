@@ -2322,7 +2322,7 @@ func alpnProtocolsForRoute(tlsRoute *TLSRouteContext) []string {
 
 func teleportGetProxyProtocol(route *TLSRouteContext) *ir.ProxyProtocol {
 	annotations := route.GetAnnotations()
-	if v := annotations[AnnotationUpstreamProxyProtocol]; strings.ToLower(v) == "true" {
+	if v := annotations[AnnotationUpstreamProxyProtocol]; strings.EqualFold(v, "true") {
 		return ptr.To(ir.ProxyProtocol{
 			Version: ir.ProxyProtocolVersionV2,
 		})
@@ -2525,7 +2525,7 @@ func (t *Translator) processTLSRouteParentRefs(tlsRoute *TLSRouteContext, resour
 				irRoute.CircuitBreaker = teleportGetCircuitBreaker(tlsRoute)
 
 				annotations := listener.gateway.GetAnnotations()
-				if v := annotations[AnnotationGatewayDownstreamProxyProtocol]; strings.ToLower(v) == "true" {
+				if v := annotations[AnnotationGatewayDownstreamProxyProtocol]; strings.EqualFold(v, "true") {
 					irListener.ProxyProtocol = &ir.ProxyProtocolSettings{}
 				}
 
