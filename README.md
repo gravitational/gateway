@@ -37,6 +37,14 @@ Kubernetes-based application gateway.
 * [Contributing guide](https://gateway.envoyproxy.io/contributions/contributing/)
 * [Developer guide](https://gateway.envoyproxy.io/contributions/develop/)
 
+## Working on the fork
+
+* Branch off `teleport`, not `main`.
+* Keep fork-only changes in small, self-contained commits so they are easy to replay when
+  rebasing onto a new upstream release.
+* To pick up upstream changes: `git fetch upstream` and rebase the fork commits onto the
+  upstream release tag.
+
 ## Security Reporting
 
 If you've found a security vulnerability or a process crash, please follow the instructions in [SECURITY.md](./SECURITY.md) to submit a report.
