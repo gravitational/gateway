@@ -113,6 +113,5 @@
         statPrefix: http-10080
         useRemoteAddress: true
     name: envoy-gateway-system/external-gateway/domain1-example-com-http
-  maxConnectionsToAcceptPerSocketEvent: 1
   name: envoy-gateway-system/external-gateway/domain1-example-com-http
   perConnectionBufferLimitBytes: 32768

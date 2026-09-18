@@ -115,7 +115,6 @@
         statPrefix: http-10082
         useRemoteAddress: true
     name: third-listener
-  maxConnectionsToAcceptPerSocketEvent: 1
   name: third-listener
   perConnectionBufferLimitBytes: 32768
 - address:
@@ -153,7 +152,6 @@
         statPrefix: http-10085
         useRemoteAddress: true
     name: sixth-listener
-  maxConnectionsToAcceptPerSocketEvent: 1
   name: sixth-listener
   perConnectionBufferLimitBytes: 32768
 - address:
@@ -211,6 +209,5 @@
         '@type': type.googleapis.com/envoy.extensions.filters.network.tcp_proxy.v3.TcpProxy
         cluster: tcp-route-dest-2
         statPrefix: tcp-10086
-  maxConnectionsToAcceptPerSocketEvent: 1
   name: seventh-listener
   perConnectionBufferLimitBytes: 32768
