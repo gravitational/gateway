@@ -65,6 +65,5 @@
         streamIdleTimeout: 10s
         useRemoteAddress: true
     name: second-listener
-  maxConnectionsToAcceptPerSocketEvent: 1
   name: second-listener
   perConnectionBufferLimitBytes: 32768

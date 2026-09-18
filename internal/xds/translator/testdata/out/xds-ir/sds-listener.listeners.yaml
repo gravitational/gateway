@@ -72,7 +72,6 @@
   - name: envoy.filters.listener.tls_inspector
     typedConfig:
       '@type': type.googleapis.com/envoy.extensions.filters.listener.tls_inspector.v3.TlsInspector
-  maxConnectionsToAcceptPerSocketEvent: 1
   name: test1
   perConnectionBufferLimitBytes: 32768
 - address:
@@ -107,7 +106,6 @@
         statPrefix: http-10081
         useRemoteAddress: true
     name: test2
-  maxConnectionsToAcceptPerSocketEvent: 1
   name: test2
   perConnectionBufferLimitBytes: 32768
 - address:
@@ -140,6 +138,5 @@
                     clusterName: sds_var_run_secrets_workload-spiffe-uds_socket_2465711674b623c4f815575b37404800
         disableStatefulSessionResumption: true
         disableStatelessSessionResumption: true
-  maxConnectionsToAcceptPerSocketEvent: 1
   name: test3
   perConnectionBufferLimitBytes: 32768

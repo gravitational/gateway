@@ -35,6 +35,5 @@
         statPrefix: http-10080
         useRemoteAddress: true
     name: path-match-listener
-  maxConnectionsToAcceptPerSocketEvent: 1
   name: path-match-listener
   perConnectionBufferLimitBytes: 32768
