@@ -1,0 +1,94 @@
+tcp:
+- name: "tls-passthrough-alpn"
+  address: "::"
+  port: 10080
+  routes:
+  # SNI and ALPN together: the filter chain matches on both.
+  - name: "tls-route-passthrough-sni-and-alpn"
+    tls:
+      inspector:
+        snis:
+        - foo.com
+        alpnProtocols:
+        - teleport-proxy-ssh
+        - h2
+    destination:
+      name: "tls-passthrough-sni-and-alpn-dest"
+      settings:
+      - endpoints:
+        - host: "1.2.3.4"
+          port: 50000
+        name: "tls-passthrough-sni-and-alpn-dest/backend/0"
+- name: "tls-passthrough-alpn-only"
+  address: "::"
+  port: 10081
+  routes:
+  # Wildcard SNI: the route is selected by ALPN alone, so the filter chain match
+  # carries application protocols and no server names.
+  - name: "tls-route-passthrough-alpn-only"
+    tls:
+      inspector:
+        snis:
+        - '*'
+        alpnProtocols:
+        - teleport-proxy-ssh
+    destination:
+      name: "tls-passthrough-alpn-only-dest"
+      settings:
+      - endpoints:
+        - host: "5.6.7.8"
+          port: 50001
+        name: "tls-passthrough-alpn-only-dest/backend/0"
+- name: "tls-passthrough-alpn-wildcard"
+  address: "::"
+  port: 10082
+  routes:
+  # A wildcard ALPN is ignored, leaving the SNI match untouched.
+  - name: "tls-route-passthrough-alpn-wildcard"
+    tls:
+      inspector:
+        snis:
+        - bar.com
+        alpnProtocols:
+        - '*'
+    destination:
+      name: "tls-passthrough-alpn-wildcard-dest"
+      settings:
+      - endpoints:
+        - host: "9.10.11.12"
+          port: 50002
+        name: "tls-passthrough-alpn-wildcard-dest/backend/0"
+- name: "tls-passthrough-alpn-multiplex"
+  address: "::"
+  port: 10083
+  routes:
+  # Two routes, same SNI, split only by ALPN. This is the multiplexing case: both filter
+  # chains share a server name, so the ALPN match is the only thing telling them apart.
+  - name: "tls-route-multiplex-ssh"
+    tls:
+      inspector:
+        snis:
+        - mux.example.com
+        alpnProtocols:
+        - teleport-proxy-ssh
+    destination:
+      name: "tls-multiplex-ssh-dest"
+      settings:
+      - endpoints:
+        - host: "1.1.1.1"
+          port: 50000
+        name: "tls-multiplex-ssh-dest/backend/0"
+  - name: "tls-route-multiplex-kube"
+    tls:
+      inspector:
+        snis:
+        - mux.example.com
+        alpnProtocols:
+        - teleport-proxy-kube
+    destination:
+      name: "tls-multiplex-kube-dest"
+      settings:
+      - endpoints:
+        - host: "2.2.2.2"
+          port: 50000
+        name: "tls-multiplex-kube-dest/backend/0"
