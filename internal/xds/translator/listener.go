@@ -641,6 +641,32 @@ func addServerNamesMatch(xdsListener *listenerv3.Listener, filterChain *listener
 	return nil
 }
 
+// addApplicationProtocolsMatch matches a filter chain on the client's ALPN protocols. It assumes
+// a TCP listener, which is all TLS passthrough produces.
+//
+// Run it after addServerNamesMatch. It fills in the ALPN match on whatever filter chain match
+// that call built, or builds one itself when the SNI is a wildcard and ALPN is all there is
+// left to match on.
+func addApplicationProtocolsMatch(xdsListener *listenerv3.Listener, filterChain *listenerv3.FilterChain, protocols []string) error {
+	if xdsListener == nil || filterChain == nil {
+		return nil
+	}
+
+	// Don't add a filter chain match if the protocol is a wildcard character.
+	if len(protocols) == 0 || protocols[0] == "*" {
+		return nil
+	}
+
+	if filterChain.FilterChainMatch == nil {
+		filterChain.FilterChainMatch = &listenerv3.FilterChainMatch{}
+	}
+	filterChain.FilterChainMatch.ApplicationProtocols = protocols
+
+	// Envoy needs the TLS Inspector to read ALPN out of the ClientHello. This call is a no-op if
+	// addServerNamesMatch already added the filter, so its fingerprint settings survive.
+	return addXdsTLSInspectorFilter(xdsListener, nil)
+}
+
 // findXdsHTTPRouteConfigName finds the name of the route config associated with the
 // http connection manager within the default filter chain and returns an empty string if
 // not found.
@@ -715,9 +741,10 @@ func (t *Translator) addXdsTCPFilterChain(
 		return err
 	}
 
-	var snis []string
+	var snis, alpnProtocols []string
 	if irRoute.TLS != nil && irRoute.TLS.TLSInspectorConfig != nil {
 		snis = irRoute.TLS.TLSInspectorConfig.SNIs
+		alpnProtocols = irRoute.TLS.TLSInspectorConfig.ALPNProtocols
 	}
 
 	var fingerprints []ir.TLSFingerprintType
@@ -726,6 +753,10 @@ func (t *Translator) addXdsTCPFilterChain(
 	}
 
 	if err := addServerNamesMatch(xdsListener, filterChain, snis, fingerprints); err != nil {
+		return err
+	}
+
+	if err := addApplicationProtocolsMatch(xdsListener, filterChain, alpnProtocols); err != nil {
 		return err
 	}
 

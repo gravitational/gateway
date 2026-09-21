@@ -40,6 +40,8 @@ const (
 	HTTPRequestTimeout = "15s"
 	// egPrefix is a prefix of annotation keys that are processed by Envoy Gateway
 	egPrefix = "gateway.envoyproxy.io/"
+	// AnnotationTLSRouteProtos specifies the ALPN protos matched by a TLSRoute.
+	AnnotationTLSRouteALPNProtocols = "cloud.teleport.dev/protos"
 )
 
 var (
@@ -2295,7 +2297,22 @@ func (t *Translator) ProcessTLSRoutes(tlsRoutes []*gwapiv1.TLSRoute, gateways []
 	return relevantTLSRoutes
 }
 
+// alpnProtocolsForRoute reads the ALPN protocols a TLSRoute matches on out of its annotation.
+// Blank entries are dropped, so a padded or trailing-comma list behaves the way it looks.
+func alpnProtocolsForRoute(tlsRoute *TLSRouteContext) []string {
+	var protocols []string
+	for _, protocol := range strings.Split(tlsRoute.Annotations[AnnotationTLSRouteALPNProtocols], ",") {
+		if protocol = strings.TrimSpace(protocol); protocol != "" {
+			protocols = append(protocols, protocol)
+		}
+	}
+	return protocols
+}
+
 func (t *Translator) processTLSRouteParentRefs(tlsRoute *TLSRouteContext, resources *resource.Resources, xdsIR resource.XdsIRMap) {
+	// The annotation is set on the route, so it applies to every parentRef and listener below.
+	alpnProtocols := alpnProtocolsForRoute(tlsRoute)
+
 	for _, parentRef := range tlsRoute.ParentRefs {
 
 		// Need to compute Route rules within the parentRef loop because
@@ -2441,7 +2458,8 @@ func (t *Translator) processTLSRouteParentRefs(tlsRoute *TLSRouteContext, resour
 					// Passthrough mode - only SNI inspection
 					tlsConfig = &ir.TLS{
 						TLSInspectorConfig: &ir.TLSInspectorConfig{
-							SNIs: hosts,
+							SNIs:          hosts,
+							ALPNProtocols: alpnProtocols,
 						},
 					}
 				}
