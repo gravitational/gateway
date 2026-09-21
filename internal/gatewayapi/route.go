@@ -2323,7 +2323,7 @@ func alpnProtocolsForRoute(tlsRoute *TLSRouteContext) []string {
 func teleportGetProxyProtocol(route *TLSRouteContext) *ir.ProxyProtocol {
 	annotations := route.GetAnnotations()
 	if v := annotations[AnnotationUpstreamProxyProtocol]; strings.EqualFold(v, "true") {
-		return ptr.To(ir.ProxyProtocol{
+		return new(ir.ProxyProtocol{
 			Version: ir.ProxyProtocolVersionV2,
 		})
 	}
@@ -2336,9 +2336,9 @@ func teleportGetCircuitBreaker(route *TLSRouteContext) *ir.CircuitBreaker {
 	if v := annotations[AnnotationUpstreamMaxConnections]; v != "" {
 		uInt, err := strconv.ParseUint(v, 10, 32)
 		if err == nil {
-			return ptr.To(ir.CircuitBreaker{
-				MaxConnections:     ptr.To(uint32(uInt)),
-				MaxPendingRequests: ptr.To(uint32(uInt)),
+			return new(ir.CircuitBreaker{
+				MaxConnections:     new(uint32(uInt)),
+				MaxPendingRequests: new(uint32(uInt)),
 			})
 		}
 	}
