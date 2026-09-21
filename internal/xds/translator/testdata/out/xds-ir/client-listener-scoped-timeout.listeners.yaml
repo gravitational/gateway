@@ -33,6 +33,5 @@
         useRemoteAddress: true
     name: first-listener
   listenerFiltersTimeout: 15s
-  maxConnectionsToAcceptPerSocketEvent: 1
   name: first-listener
   perConnectionBufferLimitBytes: 32768
