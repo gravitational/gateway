@@ -37,6 +37,5 @@
   - name: envoy.filters.listener.tls_inspector
     typedConfig:
       '@type': type.googleapis.com/envoy.extensions.filters.listener.tls_inspector.v3.TlsInspector
-  maxConnectionsToAcceptPerSocketEvent: 1
   name: tls-passthrough-1
   perConnectionBufferLimitBytes: 32768

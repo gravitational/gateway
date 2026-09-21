@@ -10,6 +10,5 @@
         cluster: tcproute/default/tcproute-1/rule/-1
         statPrefix: tcp-10090
     name: tcproute/default/tcproute-1
-  maxConnectionsToAcceptPerSocketEvent: 1
   name: envoy-gateway/gateway-1/tcp
   perConnectionBufferLimitBytes: 32768

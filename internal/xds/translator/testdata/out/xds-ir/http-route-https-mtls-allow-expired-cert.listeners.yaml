@@ -54,6 +54,5 @@
         disableStatefulSessionResumption: true
         disableStatelessSessionResumption: true
         requireClientCertificate: true
-  maxConnectionsToAcceptPerSocketEvent: 1
   name: envoy-gateway/gateway-1/https-mtls-allow-expired
   perConnectionBufferLimitBytes: 32768

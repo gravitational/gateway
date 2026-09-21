@@ -12,7 +12,6 @@
         - sourceIp: {}
         statPrefix: tcp-8089
     name: tcproute/default/tcp-app-1
-  maxConnectionsToAcceptPerSocketEvent: 1
   name: default/tcp-gateway/bar
   perConnectionBufferLimitBytes: 32768
 - address:
