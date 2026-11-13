@@ -143,15 +143,15 @@ func shutdownReadyHandler(w http.ResponseWriter, readyTimeout time.Duration, rea
 // it will initiate a drain sequence on the Envoy proxy and block until
 // connections are drained or a timeout is exceeded.
 //
-// If closeListenersAfterMinDrain is true, all Envoy listeners will be closed once
-// the minimum drain duration has elapsed, by which point endpoint deprogramming
-// should be complete. This prevents new connections from being accepted while
-// existing connections continue to drain.
-func Shutdown(healthCheckFailureDelay, drainTimeout, minDrainDuration time.Duration, closeListenersAfterMinDrain bool, exitAtConnections int) error {
+// If closeInboundListenersAfterMinDrain is true, inbound Envoy listeners will be
+// closed once the minimum drain duration has elapsed, by which point endpoint
+// deprogramming should be complete. This prevents new connections from being
+// accepted while existing connections continue to drain.
+func Shutdown(healthCheckFailureDelay, drainTimeout, minDrainDuration time.Duration, closeInboundListenersAfterMinDrain bool, exitAtConnections int) error {
 	startTime := time.Now()
 	allowedToExit := false
 	healthCheckFailurePending := false
-	listenersClosed := false
+	inboundListenersClosed := false
 
 	// Reconfigure logger to write to stdout of main process if running in Kubernetes
 	if _, k8s := os.LookupEnv("KUBERNETES_SERVICE_HOST"); k8s && os.Getpid() != 1 {
@@ -160,8 +160,8 @@ func Shutdown(healthCheckFailureDelay, drainTimeout, minDrainDuration time.Durat
 
 	logger.Info(fmt.Sprintf("initiating drain with %.0f second minimum drain period and %.0f second timeout",
 		minDrainDuration.Seconds(), drainTimeout.Seconds()))
-	if closeListenersAfterMinDrain {
-		logger.Info("listeners will be closed once the minimum drain period is reached")
+	if closeInboundListenersAfterMinDrain {
+		logger.Info("inbound listeners will be closed once the minimum drain period is reached")
 	}
 
 	if healthCheckFailureDelay > 0 {
@@ -195,16 +195,17 @@ func Shutdown(healthCheckFailureDelay, drainTimeout, minDrainDuration time.Durat
 			allowedToExit = true
 		}
 
-		if closeListenersAfterMinDrain && allowedToExit && !listenersClosed {
-			// A non-graceful drain_listeners request immediately stops all listeners,
-			// closing their sockets so no new connections are accepted. Existing
-			// connections are left open to continue draining. Retried on each
-			// iteration until it succeeds.
-			logger.Info("closing all listeners")
-			if err := postEnvoyAdminAPI("drain_listeners"); err != nil {
-				logger.Error(err, "error closing listeners")
+		if closeInboundListenersAfterMinDrain && allowedToExit && !inboundListenersClosed {
+			// A non-graceful drain_listeners?inboundonly request immediately stops
+			// inbound listeners, closing their sockets so no new connections are
+			// accepted. Outbound listeners are left running and existing connections
+			// are left open to continue draining. Retried on each iteration until it
+			// succeeds.
+			logger.Info("closing inbound listeners")
+			if err := postEnvoyAdminAPI("drain_listeners?inboundonly"); err != nil {
+				logger.Error(err, "error closing inbound listeners")
 			} else {
-				listenersClosed = true
+				inboundListenersClosed = true
 			}
 		}
 

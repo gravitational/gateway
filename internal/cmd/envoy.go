@@ -31,14 +31,14 @@ func getShutdownCommand() *cobra.Command {
 	var healthCheckFailureDelay time.Duration
 	var drainTimeout time.Duration
 	var minDrainDuration time.Duration
-	var closeListenersAfterMinDrain bool
+	var closeInboundListenersAfterMinDrain bool
 	var exitAtConnections int
 
 	cmd := &cobra.Command{
 		Use:   "shutdown",
 		Short: "Gracefully drain open connections prior to pod shutdown.",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			return envoy.Shutdown(healthCheckFailureDelay, drainTimeout, minDrainDuration, closeListenersAfterMinDrain, exitAtConnections)
+			return envoy.Shutdown(healthCheckFailureDelay, drainTimeout, minDrainDuration, closeInboundListenersAfterMinDrain, exitAtConnections)
 		},
 	}
 
@@ -51,8 +51,8 @@ func getShutdownCommand() *cobra.Command {
 	cmd.PersistentFlags().DurationVar(&minDrainDuration, "min-drain-duration", 10*time.Second,
 		"Minimum drain duration allowing time for endpoint deprogramming to complete.")
 
-	cmd.PersistentFlags().BoolVar(&closeListenersAfterMinDrain, "close-listeners-after-min-drain", false,
-		"Close all Envoy listeners once the minimum drain duration has elapsed to stop accepting new connections. "+
+	cmd.PersistentFlags().BoolVar(&closeInboundListenersAfterMinDrain, "close-inbound-listeners-after-min-drain", false,
+		"Close inbound Envoy listeners once the minimum drain duration has elapsed to stop accepting new connections. "+
 			"Existing connections continue to drain.")
 
 	cmd.PersistentFlags().IntVar(&exitAtConnections, "exit-at-connections", 0,
